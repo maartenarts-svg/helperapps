@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breuk-invoer demo</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;padding:40px;color:#1e293b;}
+
+.demo-box{
+  background:#fff;border-radius:12px;padding:28px;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);max-width:580px;margin-bottom:24px;
+}
+h2{font-size:1rem;font-weight:800;margin-bottom:6px;}
+.hint{font-size:.8rem;color:#64748b;margin-bottom:16px;line-height:1.6;}
+.hint kbd{
+  background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;
+  padding:1px 5px;font-size:.78rem;
+}
+
+/* ─── Composiet-invoercontainer ─── */
+.frac-inp{
+  display:inline-flex;align-items:center;flex-wrap:nowrap;
+  min-width:240px;min-height:42px;
+  border:2px solid #e2e8f0;border-radius:8px;
+  padding:4px 12px;gap:0;cursor:text;background:#f8fafc;
+  font-family:'Courier New',monospace;font-size:1rem;font-weight:700;
+  transition:border-color .2s;
+}
+.frac-inp:focus-within{border-color:#3b82f6;background:#fff;}
+
+/* Tekstsegment */
+.fi-txt{
+  outline:none;border:none;background:transparent;
+  font-family:inherit;font-size:inherit;font-weight:inherit;
+  color:#1e293b;padding:0;line-height:1;
+  /* breedte via JS */
+}
+
+/* Breuksegment */
+.fi-frac{
+  display:inline-flex;flex-direction:column;align-items:center;
+  margin:0 3px;
+}
+.fi-frac input{
+  outline:none;border:none;background:transparent;
+  font-family:inherit;font-size:inherit;font-weight:700;
+  text-align:center;padding:0;line-height:1.35;color:#1e293b;
+}
+.fi-frac input:focus{color:#2563eb;}
+.fi-lijn{height:1.5px;background:#1e293b;width:100%;}
+
+/* Resultaatbalk */
+.result{
+  margin-top:14px;padding:9px 14px;
+  background:#f1f5f9;border-radius:8px;
+  font-size:.85rem;color:#475569;
+  font-family:'Courier New',monospace;
+}
+.result b{color:#1e293b;}
+
+hr{border:none;border-top:1.5px solid #e2e8f0;margin:20px 0;}
+.label{font-size:.72rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:1px;color:#94a3b8;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<div class="demo-box">
+  <h2>Breuk-invoer — demo</h2>
+  <div class="hint">
+    Druk op <kbd>/</kbd> om een breukstreep in te voegen. De cijfers net vóór <kbd>/</kbd>
+    worden automatisch de teller (<code>-</code> wordt meegenomen als het een negatief getal is,
+    niet als aftrekoperator).<br>
+    Navigatie: <kbd>Tab</kbd> / <kbd>Enter</kbd> vanuit noemer → verder &nbsp;|&nbsp;
+    <kbd>←</kbd> <kbd>→</kbd> navigeert tussen segmenten &nbsp;|&nbsp;
+    <kbd>Backspace</kbd> aan het begin van een leeg segment verwijdert de vorige breuk.
+  </div>
+
+  <div class="label">Voorbeeld 1 — probeer bv. <code>-3/5</code> of <code>x-1/4</code></div>
+  <div id="wi1"></div>
+  <div class="result" id="out1">Interne waarde: <b>—</b></div>
+
+  <hr>
+
+  <div class="label">Voorbeeld 2 — probeer bv. <code>+2/3x</code> of <code>-5/6</code></div>
+  <div id="wi2"></div>
+  <div class="result" id="out2">Interne waarde: <b>—</b></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   Tekst-breedte-meting via verborgen DOM-span
+   (canvas lost 'rem' niet correct op als het
+   canvas niet in de DOM zit)
+   ══════════════════════════════════════════════ */
+const _ruler = document.createElement('span');
+_ruler.setAttribute('aria-hidden','true');
+Object.assign(_ruler.style,{
+  position:'fixed',top:'-9999px',left:'-9999px',
+  visibility:'hidden',whiteSpace:'nowrap',pointerEvents:'none',
+  fontFamily:"'Courier New', monospace",
+  fontSize:'1rem',fontWeight:'700'
+});
+document.body.appendChild(_ruler);
+
+function meetBreedte(tekst){
+  _ruler.textContent = tekst || '';
+  return Math.max(8, _ruler.offsetWidth + 4);
+}
+
+/* ══════════════════════════════════════════════
+   Regel: extraheer teller uit de tekst vóór /
+   Zoek de laatste +, -, *, · of : in de tekst.
+   Alles erna = teller.
+   De - gaat mee in de teller als er vóór die -
+   (na spaties) geen letter of cijfer staat.
+   ══════════════════════════════════════════════ */
+function extractTeller(tekst){
+  // Zoek laatste +, -, *, · of : van rechts
+  let opIdx = -1, opChar = '';
+  for(let i = tekst.length - 1; i >= 0; i--){
+    if('+-*·:='.includes(tekst[i])){ opIdx = i; opChar = tekst[i]; break; }
+  }
+
+  if(opIdx === -1) return {prefix: '', teller: tekst};  // geen operator
+
+  if(opChar === '+' || opChar === '*' || opChar === '·' || opChar === ':' || opChar === '='){
+    // +, *, ·, : en = zijn altijd operatoren; staan niet in de teller
+    return {prefix: tekst.slice(0, opIdx + 1), teller: tekst.slice(opIdx + 1)};
+  }
+
+  // opChar === '-'
+  // Is er een letter of cijfer vlak vóór de - (na eventuele spaties)?
+  const voor = tekst.slice(0, opIdx).trimEnd();
+  if(voor.length > 0 && /[a-zA-Z0-9]$/.test(voor)){
+    // Aftrekoperator: - hoort bij de prefix
+    return {prefix: tekst.slice(0, opIdx + 1), teller: tekst.slice(opIdx + 1)};
+  } else {
+    // Negatief teken: - hoort bij de teller
+    return {prefix: tekst.slice(0, opIdx), teller: tekst.slice(opIdx)};
+  }
+}
+
+/* ══════════════════════════════════════════════
+   Bouw één composiet-invoer-widget
+   ══════════════════════════════════════════════ */
+function maakFracInvoer(doelId, outputId){
+  const wrap = document.createElement('div');
+  wrap.className = 'frac-inp';
+
+  const seg = []; // lijst van segment-objecten
+
+  /* Serialiseer alle segmenten naar een leesbare string */
+  function leesWaarde(){
+    return seg.map(s => {
+      if(s.type === 'txt') return s.el.value;
+      return `(${s.tIn.value||'?'}/${s.nIn.value||'?'})`;
+    }).join('');
+  }
+
+  function toonOutput(){
+    const el = document.getElementById(outputId);
+    if(el) el.querySelector('b').textContent = leesWaarde() || '—';
+  }
+
+  /* ── Tekstsegment ── */
+  function maakTxt(initVal){
+    const el = document.createElement('input');
+    el.type = 'text';
+    el.className = 'fi-txt';
+    el.value = initVal || '';
+    el.style.width = txtBr(el.value) + 'px';
+
+    el.addEventListener('input', () => {
+      el.style.width = txtBr(el.value) + 'px';
+      toonOutput();
+    });
+
+    el.addEventListener('keydown', e => {
+      const pos = el.selectionStart;
+      const idx = seg.indexOf(s);
+
+      /* * → vervang door · */
+      if(e.key === '*'){
+        e.preventDefault();
+        const voor = el.value.slice(0, pos), achter = el.value.slice(pos);
+        el.value = voor + '·' + achter;
+        el.setSelectionRange(pos + 1, pos + 1);
+        el.style.width = txtBr(el.value) + 'px';
+        toonOutput();
+        return;
+      }
+
+      /* / → breuk invoegen op cursorpositie */
+      if(e.key === '/'){
+        e.preventDefault();
+        const voor  = el.value.slice(0, pos);
+        const achter = el.value.slice(pos);
+        const {prefix, teller} = extractTeller(voor);
+
+        el.value = prefix;
+        el.style.width = txtBr(prefix) + 'px';
+
+        const fracSeg  = maakFrac(teller);
+        const achterSeg = maakTxt(achter);
+
+        seg.splice(idx + 1, 0, fracSeg, achterSeg);
+        inserNaDom(fracSeg.el,  el);
+        inserNaDom(achterSeg.el, fracSeg.el);
+
+        // Focus naar noemer (of teller als teller leeg is)
+        teller ? fracSeg.nIn.focus() : fracSeg.tIn.focus();
+        toonOutput();
+        return;
+      }
+
+      /* ← aan begin → naar vorige fracSeg.noemer */
+      if(e.key === 'ArrowLeft' && pos === 0 && el.selectionEnd === 0){
+        if(idx > 0 && seg[idx-1].type === 'frac'){
+          e.preventDefault();
+          const n = seg[idx-1].nIn;
+          n.focus();
+          n.setSelectionRange(n.value.length, n.value.length);
+        }
+        return;
+      }
+
+      /* → aan einde → naar volgende fracSeg.teller */
+      if(e.key === 'ArrowRight' && pos === el.value.length){
+        if(idx < seg.length-1 && seg[idx+1].type === 'frac'){
+          e.preventDefault();
+          const t = seg[idx+1].tIn;
+          t.focus();
+          t.setSelectionRange(0, 0);
+        }
+        return;
+      }
+
+      /* Backspace aan begin van leeg veld → verwijder vorige breuk */
+      if(e.key === 'Backspace' && pos === 0 && el.value === ''){
+        if(idx > 0 && seg[idx-1].type === 'frac'){
+          e.preventDefault();
+          verwijderFrac(seg[idx-1], s);
+        }
+      }
+    });
+
+    const s = {type:'txt', el};
+    return s;
+  }
+
+  /* ── Breuksegment ── */
+  function maakFrac(tellerVal){
+    const el  = document.createElement('span');
+    el.className = 'fi-frac';
+
+    const tIn  = document.createElement('input');
+    tIn.type  = 'text';
+    tIn.value = tellerVal || '';
+
+    const lijn = document.createElement('div');
+    lijn.className = 'fi-lijn';
+
+    const nIn  = document.createElement('input');
+    nIn.type  = 'text';
+    nIn.value = '';
+
+    el.appendChild(tIn);
+    el.appendChild(lijn);
+    el.appendChild(nIn);
+
+    function updateBr(){
+      const tw = fracBr(tIn.value);
+      const nw = fracBr(nIn.value);
+      tIn.style.width = tw + 'px';
+      nIn.style.width = nw + 'px';
+      lijn.style.width = Math.max(tw, nw) + 'px';
+      toonOutput();
+    }
+    updateBr();
+
+    tIn.addEventListener('input', updateBr);
+    nIn.addEventListener('input', updateBr);
+
+    /* helper: vervang * door · in teller of noemer */
+    function sterToDot(inp, e){
+      if(e.key !== '*') return false;
+      e.preventDefault();
+      const p = inp.selectionStart;
+      inp.value = inp.value.slice(0, p) + '·' + inp.value.slice(inp.selectionEnd);
+      inp.setSelectionRange(p + 1, p + 1);
+      updateBr();
+      return true;
+    }
+
+    /* toetsen in TELLER */
+    tIn.addEventListener('keydown', e => {
+      const pos = tIn.selectionStart;
+      const idx = seg.indexOf(s);
+
+      /* * → · in teller */
+      if(sterToDot(tIn, e)) return;
+
+      /* / → naar noemer */
+      if(e.key === '/'){ e.preventDefault(); nIn.focus(); return; }
+
+      /* → aan einde → noemer */
+      if(e.key === 'ArrowRight' && pos === tIn.value.length){
+        e.preventDefault(); nIn.focus();
+        nIn.setSelectionRange(0,0); return;
+      }
+
+      /* ← aan begin → vorig tekstsegment */
+      if(e.key === 'ArrowLeft' && pos === 0){
+        if(idx > 0 && seg[idx-1].type === 'txt'){
+          e.preventDefault();
+          const p = seg[idx-1].el;
+          p.focus();
+          p.setSelectionRange(p.value.length, p.value.length);
+        }
+        return;
+      }
+
+      /* Backspace in lege teller → verwijder breuk */
+      if(e.key === 'Backspace' && tIn.value === ''){
+        e.preventDefault();
+        if(idx > 0 && seg[idx-1].type === 'txt'){
+          verwijderFrac(s, idx < seg.length-1 ? seg[idx+1] : null);
+        }
+      }
+    });
+
+    /* toetsen in NOEMER */
+    nIn.addEventListener('keydown', e => {
+      const pos = nIn.selectionStart;
+      const idx = seg.indexOf(s);
+
+      /* * → · in noemer */
+      if(sterToDot(nIn, e)) return;
+
+      /* Tab / Enter → volgend segment */
+      if(e.key === 'Tab' || e.key === 'Enter'){
+        e.preventDefault();
+        if(idx < seg.length-1){
+          const v = seg[idx+1].el;
+          v.focus();
+          v.setSelectionRange(0, 0);
+        }
+        return;
+      }
+
+      /* / → nieuw breuksegment na dit segment */
+      if(e.key === '/'){
+        e.preventDefault();
+        const nieuwFrac = maakFrac('');
+        const achter    = maakTxt('');
+        seg.splice(idx+1, 0, nieuwFrac, achter);
+        inserNaDom(nieuwFrac.el, el);
+        inserNaDom(achter.el, nieuwFrac.el);
+        nieuwFrac.tIn.focus();
+        toonOutput();
+        return;
+      }
+
+      /* ← aan begin → teller */
+      if(e.key === 'ArrowLeft' && pos === 0){
+        e.preventDefault();
+        tIn.focus();
+        tIn.setSelectionRange(tIn.value.length, tIn.value.length);
+        return;
+      }
+
+      /* → aan einde → volgend tekstsegment */
+      if(e.key === 'ArrowRight' && pos === nIn.value.length){
+        if(idx < seg.length-1 && seg[idx+1].type === 'txt'){
+          e.preventDefault();
+          seg[idx+1].el.focus();
+          seg[idx+1].el.setSelectionRange(0, 0);
+        }
+        return;
+      }
+
+      /* Backspace in lege noemer → focus naar teller */
+      if(e.key === 'Backspace' && nIn.value === ''){
+        e.preventDefault();
+        tIn.focus();
+        tIn.setSelectionRange(tIn.value.length, tIn.value.length);
+      }
+    });
+
+    const s = {type:'frac', el, tIn, nIn};
+    return s;
+  }
+
+  /* Verwijder een breuksegment en voeg omringende tekstsegmenten samen */
+  function verwijderFrac(fracSeg, naSegment){
+    const idx = seg.indexOf(fracSeg);
+    if(idx < 0) return;
+
+    // Haal voor- en achtertekstsegment op
+    const vSeg = (idx > 0 && seg[idx-1].type === 'txt') ? seg[idx-1] : null;
+    const aSeg = naSegment || (idx < seg.length-1 && seg[idx+1].type === 'txt' ? seg[idx+1] : null);
+
+    let curPos = vSeg ? vSeg.el.value.length : 0;
+
+    // Samenvoegen: tekst van vSeg + tekst van aSeg
+    if(vSeg && aSeg){
+      vSeg.el.value += aSeg.el.value;
+      vSeg.el.style.width = txtBr(vSeg.el.value) + 'px';
+      seg.splice(idx, 2);   // verwijder fracSeg + aSeg
+      wrap.removeChild(fracSeg.el);
+      wrap.removeChild(aSeg.el);
+    } else if(vSeg){
+      seg.splice(idx, 1);
+      wrap.removeChild(fracSeg.el);
+    } else {
+      seg.splice(idx, 1);
+      wrap.removeChild(fracSeg.el);
+    }
+
+    // Focus naar het vSeg op cursorpositie
+    if(vSeg){
+      vSeg.el.focus();
+      vSeg.el.setSelectionRange(curPos, curPos);
+    }
+    toonOutput();
+  }
+
+  /* Klik op de container zelf → focus laatste tekstsegment */
+  wrap.addEventListener('click', e => {
+    if(e.target === wrap){
+      const last = [...seg].reverse().find(s => s.type === 'txt');
+      if(last){ last.el.focus(); last.el.setSelectionRange(last.el.value.length, last.el.value.length); }
+    }
+  });
+
+  /* DOM-hulpfunctie: voeg 'nieuw' in direct na 'ref' */
+  function inserNaDom(nieuw, ref){
+    if(ref.nextSibling) wrap.insertBefore(nieuw, ref.nextSibling);
+    else wrap.appendChild(nieuw);
+  }
+
+  /* Start met één leeg tekstsegment */
+  const begin = maakTxt('');
+  seg.push(begin);
+  wrap.appendChild(begin.el);
+  document.getElementById(doelId).appendChild(wrap);
+}
+
+/* Breedte-helpers */
+function txtBr(val){ return meetBreedte(val); }
+function fracBr(val){ return meetBreedte(val); }
+
+/* ══ Instantieer de twee demo-widgets ══ */
+maakFracInvoer('wi1', 'out1');
+maakFracInvoer('wi2', 'out2');
+</script>
+</body>
+</html>
