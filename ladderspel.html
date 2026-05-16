@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ladderspel — Rekenen met letters</title>
+<style>
+  :root {
+    --groen: #1D9E75;
+    --groen-licht: #E1F5EE;
+    --groen-donker: #085041;
+    --blauw: #378ADD;
+    --blauw-licht: #E6F1FB;
+    --oranje: #EF9F27;
+    --oranje-licht: #FAEEDA;
+    --rood: #E24B4A;
+    --rood-licht: #FCEBEB;
+    --grijs: #888780;
+    --grijs-licht: #F1EFE8;
+    --tekst: #2C2C2A;
+    --tekst-zacht: #5F5E5A;
+    --rand: rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: #faf9f6;
+    color: var(--tekst);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: normal;
+    letter-spacing: 0.02em;
+    text-align: center;
+    margin-bottom: 0.25rem;
+    color: var(--groen-donker);
+  }
+
+  .ondertitel {
+    font-size: 0.95rem;
+    color: var(--tekst-zacht);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-style: italic;
+  }
+
+  .kaart {
+    background: white;
+    border: 1px solid var(--rand);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 620px;
+    margin-bottom: 1.5rem;
+  }
+
+  .scherm { display: none; }
+  .scherm.actief { display: block; }
+
+  /* Spelregels */
+  .spelregels-titel {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--groen-donker);
+    margin-bottom: 1rem;
+  }
+
+  .materiaal-lijst {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .materiaal-item {
+    background: var(--groen-licht);
+    color: var(--groen-donker);
+    border-radius: 20px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.88rem;
+    border: 1px solid #9FE1CB;
+  }
+
+  .regels-lijst {
+    list-style: none;
+    counter-reset: stap;
+  }
+
+  .regels-lijst li {
+    counter-increment: stap;
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    align-items: flex-start;
+  }
+
+  .regels-lijst li::before {
+    content: counter(stap);
+    background: var(--groen-donker);
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: bold;
+    margin-top: 2px;
+    font-family: sans-serif;
+  }
+
+  /* Namen */
+  .namen-raster {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .naam-veld label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--tekst-zacht);
+    margin-bottom: 0.35rem;
+    font-family: sans-serif;
+  }
+
+  .naam-veld input {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--rand);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Georgia', serif;
+    background: #faf9f6;
+    color: var(--tekst);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .naam-veld input:focus {
+    border-color: var(--groen);
+  }
+
+  /* Knoppen */
+  .knop {
+    display: inline-block;
+    padding: 0.65rem 1.5rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: 'Georgia', serif;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .knop:active { transform: scale(0.97); }
+  .knop:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .knop-groen {
+    background: var(--groen);
+    color: white;
+  }
+
+  .knop-grijs {
+    background: var(--grijs-licht);
+    color: var(--tekst);
+    border: 1px solid var(--rand);
+  }
+
+  .knop-vol {
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem;
+    font-size: 1.05rem;
+  }
+
+  /* Spelbalk boven */
+  .speler-balk {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+    justify-content: center;
+  }
+
+  .speler-badge {
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-family: sans-serif;
+    border: 1px solid var(--rand);
+    background: var(--grijs-licht);
+    color: var(--tekst-zacht);
+    transition: all 0.2s;
+  }
+
+  .speler-badge.actief-beurt {
+    background: var(--groen-donker);
+    color: white;
+    border-color: var(--groen-donker);
+    font-weight: bold;
+  }
+
+  .speler-badge.mag-antwoorden {
+    background: var(--oranje-licht);
+    color: #633806;
+    border-color: var(--oranje);
+  }
+
+  .speler-badge.juist {
+    background: var(--groen-licht);
+    color: var(--groen-donker);
+    border-color: var(--groen);
+  }
+
+  .speler-badge.fout {
+    background: var(--rood-licht);
+    color: #791F1F;
+    border-color: var(--rood);
+  }
+
+  /* Vraag */
+  .vraag-label {
+    font-size: 0.82rem;
+    color: var(--tekst-zacht);
+    font-family: sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+  }
+
+  .vraag-tekst {
+    font-size: 1.6rem;
+    color: var(--groen-donker);
+    margin-bottom: 1.5rem;
+    min-height: 2.5rem;
+    line-height: 1.3;
+  }
+
+  .instructie-tekst {
+    font-size: 1rem;
+    color: var(--tekst-zacht);
+    margin-bottom: 1.25rem;
+    font-family: sans-serif;
+    line-height: 1.5;
+  }
+
+  /* Antwoord invoer */
+  .antwoord-rij {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .antwoord-input {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border: 2px solid var(--rand);
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-family: 'Georgia', serif;
+    outline: none;
+    transition: border-color 0.15s;
+    background: white;
+  }
+
+  .antwoord-input:focus { border-color: var(--groen); }
+  .antwoord-input.juist { border-color: var(--groen); background: var(--groen-licht); }
+  .antwoord-input.fout { border-color: var(--rood); background: var(--rood-licht); }
+
+  /* Feedback */
+  .feedback-blok {
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    font-family: sans-serif;
+    line-height: 1.5;
+  }
+
+  .feedback-juist {
+    background: var(--groen-licht);
+    color: var(--groen-donker);
+    border: 1px solid #9FE1CB;
+  }
+
+  .feedback-fout {
+    background: var(--rood-licht);
+    color: #791F1F;
+    border: 1px solid #F7C1C1;
+  }
+
+  .feedback-info {
+    background: var(--blauw-licht);
+    color: #0C447C;
+    border: 1px solid #B5D4F4;
+  }
+
+  /* Oplossing tussenstappen */
+  .oplossing-blok {
+    background: var(--oranje-licht);
+    border: 1px solid #FAC775;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+    font-family: sans-serif;
+  }
+
+  .oplossing-blok .opl-titel {
+    font-weight: bold;
+    color: #412402;
+    margin-bottom: 0.5rem;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stap-rij {
+    display: block;
+    font-size: 1.05rem;
+    color: #633806;
+    margin-bottom: 0.3rem;
+    line-height: 1.6;
+    font-family: 'Georgia', serif;
+  }
+
+  .stap-rij .pijl {
+    color: var(--oranje);
+    font-size: 0.9rem;
+  }
+
+  .onderstreept {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .dubbel-onderstreept {
+    border-bottom: 3px double currentColor;
+    padding-bottom: 1px;
+  }
+
+  /* Dobbelsteen */
+  .dobbelsteen-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1rem 0;
+  }
+
+  .dobbelsteen {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border: 3px solid var(--groen-donker);
+    border-radius: 14px;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 10px;
+    gap: 4px;
+    transition: transform 0.1s;
+    user-select: none;
+  }
+
+  .dobbelsteen:hover { transform: scale(1.05); }
+  .dobbelsteen:active { transform: scale(0.95); }
+  .dobbelsteen.rolt { animation: rollen 0.6s ease-out; }
+
+  @keyframes rollen {
+    0%   { transform: rotate(0deg) scale(1); }
+    20%  { transform: rotate(15deg) scale(1.1); }
+    40%  { transform: rotate(-12deg) scale(0.95); }
+    60%  { transform: rotate(8deg) scale(1.05); }
+    80%  { transform: rotate(-5deg) scale(1); }
+    100% { transform: rotate(0deg) scale(1); }
+  }
+
+  .dot {
+    background: var(--groen-donker);
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    visibility: hidden;
+  }
+
+  .dot.zichtbaar { visibility: visible; }
+
+  .stappen-tekst {
+    font-size: 1.2rem;
+    color: var(--groen-donker);
+    font-weight: bold;
+    font-family: sans-serif;
+    text-align: center;
+  }
+
+  /* Score bord */
+  .score-balk {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .score-item {
+    background: white;
+    border: 1px solid var(--rand);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    min-width: 90px;
+    font-family: sans-serif;
+  }
+
+  .score-naam {
+    font-size: 0.8rem;
+    color: var(--tekst-zacht);
+  }
+
+  .score-getal {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--groen-donker);
+  }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--rand); margin: 1.25rem 0; }
+
+  .verborgen { display: none !important; }
+
+  /* Zichtbare coefficient 1 */
+  .coef-een {
+    color: var(--groen);
+    opacity: 0.6;
+  }
+
+  .beurt-info {
+    font-size: 0.88rem;
+    color: var(--tekst-zacht);
+    text-align: center;
+    margin-bottom: 1rem;
+    font-family: sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<h1>Ladderspel</h1>
+<p class="ondertitel">Rekenen met letters</p>
+
+<!-- SCHERM 1: Spelregels -->
+<div id="scherm-spelregels" class="scherm actief kaart">
+  <div class="spelregels-titel">Spelregels</div>
+
+  <p style="font-size:0.88rem; color:var(--tekst-zacht); margin-bottom:0.6rem; font-family:sans-serif;">Materiaal</p>
+  <div class="materiaal-lijst">
+    <span class="materiaal-item">Spelbord</span>
+    <span class="materiaal-item">Pionnen</span>
+    <span class="materiaal-item">Computer</span>
+    <span class="materiaal-item">Kladblad</span>
+    <span class="materiaal-item">Schrijfmateriaal</span>
+  </div>
+
+  <ol class="regels-lijst">
+    <li>De computer geeft een opgave. <strong>Iedereen</strong> lost die op het kladblad op.</li>
+    <li>De eerste speler van deze beurt geeft als eerste zijn antwoord in. Is het juist? Dan mag hij de dobbelsteen gooien en zijn pion vooruitzetten.</li>
+    <li>Is het antwoord fout? Dan mag de volgende speler proberen — ook die gooit de dobbelsteen als hij het juist heeft.</li>
+    <li>Zodra iemand juist antwoordt, is de antwoordronde voorbij. De andere spelers hoeven dan niet meer in te vullen.</li>
+    <li>Heeft iedereen fout geantwoord? Dan toont de computer het juiste antwoord met tussenstappen. Niemand gooit de dobbelsteen.</li>
+    <li>Daarna begint een nieuwe beurt. De volgende speler (in volgorde) is nu de eerste die mag antwoorden.</li>
+    <li>Wie als eerste het einde van het spelbord bereikt, wint!</li>
+  </ol>
+
+  <hr>
+  <button class="knop knop-groen knop-vol" onclick="naarNamen()">Namen invoeren →</button>
+</div>
+
+<!-- SCHERM 2: Namen -->
+<div id="scherm-namen" class="scherm kaart">
+  <p style="font-size:1rem; color:var(--tekst-zacht); margin-bottom:1.25rem; font-family:sans-serif;">Vul de namen van de spelers in. Minimaal 2, maximaal 4.</p>
+
+  <div class="namen-raster">
+    <div class="naam-veld">
+      <label>Speler 1</label>
+      <input type="text" id="naam1" placeholder="Naam..." maxlength="20">
+    </div>
+    <div class="naam-veld">
+      <label>Speler 2</label>
+      <input type="text" id="naam2" placeholder="Naam..." maxlength="20">
+    </div>
+    <div class="naam-veld">
+      <label>Speler 3 (optioneel)</label>
+      <input type="text" id="naam3" placeholder="Naam..." maxlength="20">
+    </div>
+    <div class="naam-veld">
+      <label>Speler 4 (optioneel)</label>
+      <input type="text" id="naam4" placeholder="Naam..." maxlength="20">
+    </div>
+  </div>
+
+  <div id="namen-fout" class="feedback-blok feedback-fout verborgen">Vul minstens 2 namen in.</div>
+
+  <button class="knop knop-groen knop-vol" onclick="startSpel()">Spel starten →</button>
+</div>
+
+<!-- SCHERM 3: Spel -->
+<div id="scherm-spel" class="scherm" style="width:100%; max-width:620px;">
+
+  <!-- Scorebord -->
+  <div id="score-balk" class="score-balk"></div>
+
+  <!-- Speelkaart -->
+  <div class="kaart">
+    <div id="speler-balk" class="speler-balk"></div>
+    <div id="beurt-info" class="beurt-info"></div>
+
+    <!-- Vraagfase -->
+    <div id="fase-vraag">
+      <p class="vraag-label">Opgave</p>
+      <div id="vraag-tekst" class="vraag-tekst"></div>
+      <p class="instructie-tekst" id="antwoord-instructie"></p>
+
+      <div class="antwoord-rij">
+        <input type="text" id="antwoord-input" class="antwoord-input" placeholder="Jouw antwoord..." autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="knop knop-groen" id="knop-controleer" onclick="controleerAntwoord()">OK</button>
+      </div>
+
+      <div id="feedback-blok" class="verborgen"></div>
+      <div id="oplossing-blok" class="verborgen oplossing-blok"></div>
+
+      <button id="knop-volgende" class="knop knop-groen knop-vol verborgen" onclick="volgendBeurt()">Volgende beurt →</button>
+    </div>
+
+    <!-- Dobbelsteenfase -->
+    <div id="fase-dobbelsteen">
+      <p class="instructie-tekst" id="dobbelsteen-instructie"></p>
+      <div class="dobbelsteen-container">
+        <div class="dobbelsteen" id="dobbelsteen" onclick="rolDobbelsteen()">
+          <div class="dot" id="d1"></div>
+          <div class="dot" id="d2"></div>
+          <div class="dot" id="d3"></div>
+          <div class="dot" id="d4"></div>
+          <div class="dot" id="d5"></div>
+          <div class="dot" id="d6"></div>
+          <div class="dot" id="d7"></div>
+          <div class="dot" id="d8"></div>
+          <div class="dot" id="d9"></div>
+        </div>
+        <div id="stappen-tekst" class="stappen-tekst verborgen"></div>
+      </div>
+      <button id="knop-na-dobbel" class="knop knop-groen knop-vol verborgen" onclick="volgendBeurt()">Volgende beurt →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== SPELSTATUS ===== */
+let spelers = [];
+let stappen = [];
+let eersteSpelerIndex = 0;    // Wie begint deze beurt (de 'eerste speler')
+let antwoordSpelerIndex = 0;  // Wie mag nu antwoorden
+let huidigVraag = null;
+let beurtKlaar = false;
+let dobbelsteenGerold = false;
+
+/* ===== HULPFUNCTIES ===== */
+
+function kiesLetter(uitgesloten) {
+  uitgesloten = uitgesloten || [];
+  var letters = ['a','b','c','d','m','n','p','q','t','x','y','z'];
+  var beschikbaar = letters.filter(function(l){ return uitgesloten.indexOf(l) === -1; });
+  return beschikbaar[Math.floor(Math.random() * beschikbaar.length)];
+}
+
+function geheelGetal(min, max, uitsluit0) {
+  uitsluit0 = uitsluit0 !== false;
+  var n;
+  do { n = Math.floor(Math.random() * (max - min + 1)) + min; }
+  while (uitsluit0 && n === 0);
+  return n;
+}
+
+function gnul(min, max) { return geheelGetal(min, max, true); }
+
+// Zichtbare coëfficiënt 1: lichtere kleur — ALLEEN voor tussenstappen/oplossing
+var EEN = '<span class="coef-een">1</span>';
+
+// coefStr: met zichtbare 1 (voor oplossing)
+function coefStr(c) {
+  var abs = Math.abs(c);
+  return abs === 1 ? EEN : String(abs);
+}
+
+// coefStrOpg: zonder zichtbare 1 (voor opgave)
+function coefStrOpg(c) {
+  var abs = Math.abs(c);
+  return abs === 1 ? '' : String(abs);
+}
+
+// Letterterm als eerste term in OPGAVE: 3x, -3x, x, -x (geen zichtbare 1)
+function termEerst(coef, letter) {
+  var cs = coefStrOpg(coef);
+  return coef < 0 ? '-' + cs + '<i>' + letter + '</i>' : cs + '<i>' + letter + '</i>';
+}
+
+// Letterterm na bewerkingsteken in OPGAVE: + 3x of - 3x
+function termNa(coef, letter) {
+  var cs = coefStrOpg(coef);
+  if (coef < 0) {
+    return ' - ' + cs + '<i>' + letter + '</i>';
+  }
+  return ' + ' + cs + '<i>' + letter + '</i>';
+}
+
+// Letterterm als eerste term in OPLOSSING: met zichtbare 1
+function termEerstOpl(coef, letter) {
+  var cs = coefStr(coef);
+  return coef < 0 ? '-' + cs + '<i>' + letter + '</i>' : cs + '<i>' + letter + '</i>';
+}
+
+// Letterterm na bewerkingsteken in OPLOSSING: met zichtbare 1
+function termNaOpl(coef, letter) {
+  var cs = coefStr(coef);
+  if (coef < 0) {
+    return ' - ' + cs + '<i>' + letter + '</i>';
+  }
+  return ' + ' + cs + '<i>' + letter + '</i>';
+}
+
+// Letterterm na minteken
+// Positief: - 3x
+// Negatief: - (-3x)
+function termNaMin(coef, letter) {
+  var cs = coefStr(coef);
+  if (coef < 0) {
+    return ' - (-' + cs + '<i>' + letter + '</i>)';
+  }
+  return ' - ' + cs + '<i>' + letter + '</i>';
+}
+
+// Letterterm na maalteken: · 3x of · (-3x)
+function termNaMaal(coef, letter) {
+  var cs = coefStr(coef);
+  if (coef < 0) {
+    return ' · (-' + cs + '<i>' + letter + '</i>)';
+  }
+  return ' · ' + cs + '<i>' + letter + '</i>';
+}
+
+// Getal na bewerkingsteken: + 5 of - 5
+function getalNa(n) {
+  if (n < 0) return ' - ' + Math.abs(n);
+  return ' + ' + n;
+}
+
+// Getal na minteken
+// Positief: - 5
+// Negatief: - (-5)
+function getalNaMin(n) {
+  if (n < 0) return ' - (' + n + ')';
+  return ' - ' + n;
+}
+
+// Getal na maalteken
+function getalNaMaal(n) {
+  if (n < 0) return ' · (' + n + ')';
+  return ' · ' + n;
+}
+
+// Antwoordterm HTML (voor in oplossing): geen zichtbare 1, gewone schrijfwijze
+function antTermHTML(coef, letter, eerst) {
+  var abs = Math.abs(coef);
+  var cs = abs === 1 ? '' : String(abs);
+  if (eerst) {
+    return coef < 0 ? '-' + cs + '<i>' + letter + '</i>' : cs + '<i>' + letter + '</i>';
+  }
+  if (coef < 0) return ' - ' + cs + '<i>' + letter + '</i>';
+  return ' + ' + cs + '<i>' + letter + '</i>';
+}
+
+function antGetalHTML(n, eerst) {
+  if (eerst) return String(n);
+  if (n < 0) return ' - ' + Math.abs(n);
+  return ' + ' + n;
+}
+
+/* ===== ANTWOORDVERGELIJKING ===== */
+
+function normaliseer(str) {
+  return str.replace(/\s+/g,'').replace(/·/g,'*').toLowerCase().trim();
+}
+
+function antwoordenGelijk(ingegeven, correct) {
+  var n = normaliseer(ingegeven);
+  var c = normaliseer(correct);
+  if (n === c) return true;
+  function splits(s) {
+    var delen = [], huidig = '';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if ((ch === '+' || ch === '-') && i > 0) {
+        if (huidig) delen.push(huidig);
+        huidig = ch;
+      } else { huidig += ch; }
+    }
+    if (huidig) delen.push(huidig);
+    return delen.sort();
+  }
+  return splits(n).toString() === splits(c).toString();
+}
+
+/* ===== CATEGORIEËN ===== */
+
+// Cat 1: 2 gelijksoortige termen
+function genereerCat1() {
+  var x = kiesLetter();
+  var a = gnul(-9,9), b = gnul(-9,9);
+  if (a+b === 0) return genereerCat1();
+  var som = a + b;
+  var opg = termEerst(a,x) + termNa(b,x);
+  var ant = antTermHTML(som,x,true);
+  var antT = som + x;
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 1,
+    stappen: [
+      opg,
+      '= <span class="onderstreept">' + termEerstOpl(a,x) + '</span><span class="onderstreept">' + termNaOpl(b,x) + '</span>',
+      '= ' + ant
+    ]
+  };
+}
+
+// Cat 2: 3 gelijksoortige termen
+function genereerCat2() {
+  var x = kiesLetter();
+  var a = gnul(-8,8), b = gnul(-8,8), c = gnul(-8,8);
+  var som = a+b+c;
+  if (som === 0) return genereerCat2();
+  var opg = termEerst(a,x) + termNa(b,x) + termNa(c,x);
+  var ant = antTermHTML(som,x,true);
+  var antT = som + x;
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 2,
+    stappen: [
+      opg,
+      '= <span class="onderstreept">' + termEerstOpl(a,x) + '</span>'
+        + '<span class="onderstreept">' + termNaOpl(b,x) + '</span>'
+        + '<span class="onderstreept">' + termNaOpl(c,x) + '</span>',
+      '= ' + ant
+    ]
+  };
+}
+
+// Cat 3: 2 soorten letttertermen door elkaar
+function genereerCat3() {
+  var x = kiesLetter(), y = kiesLetter([x]);
+  var a = gnul(-8,8), b = gnul(-8,8), c = gnul(-8,8), d = gnul(-8,8);
+  var sx = a+b, sy = c+d;
+  if (sx===0 || sy===0) return genereerCat3();
+  var opg = termEerst(a,x) + termNa(c,y) + termNa(b,x) + termNa(d,y);
+  var ant = antTermHTML(sx,x,true) + antTermHTML(sy,y,false);
+  var antT = sx + x + (sy > 0 ? '+' : '') + sy + y;
+  // Tussenstap: termen in originele volgorde (a,x - c,y - b,x - d,y)
+  var ts3 = '<span class="onderstreept">' + termEerstOpl(a,x) + '</span>'
+    + '<span class="dubbel-onderstreept">' + termNaOpl(c,y) + '</span>'
+    + '<span class="onderstreept">' + termNaOpl(b,x) + '</span>'
+    + '<span class="dubbel-onderstreept">' + termNaOpl(d,y) + '</span>';
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 3,
+    stappen: [opg, '= ' + ts3, '= ' + ant]
+  };
+}
+
+// Cat 4: letterterm + losse getallen door elkaar
+function genereerCat4() {
+  var x = kiesLetter();
+  var a = gnul(-8,8), b = gnul(1,6), c = gnul(-8,8), d = gnul(1,6);
+  var sx = a+c, sg = b+d;
+  if (sx===0) return genereerCat4();
+  var opg = termEerst(a,x) + getalNa(b) + termNa(c,x) + getalNa(d);
+  var ant = antTermHTML(sx,x,true) + ' + ' + sg;
+  var antT = sx + x + '+' + sg;
+  // Tussenstap: termen in originele volgorde (a,x - b - c,x - d)
+  var ts4 = '<span class="onderstreept">' + termEerstOpl(a,x) + '</span>'
+    + '<span class="dubbel-onderstreept">' + getalNa(b) + '</span>'
+    + '<span class="onderstreept">' + termNaOpl(c,x) + '</span>'
+    + '<span class="dubbel-onderstreept">' + getalNa(d) + '</span>';
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 4,
+    stappen: [opg, '= ' + ts4, '= ' + ant]
+  };
+}
+
+// Cat 5: getal x letterterm
+function genereerCat5() {
+  var x = kiesLetter();
+  var a = gnul(-9,9), b = gnul(-9,9);
+  var prod = a * b;
+  // Opgave: a · bx  (b negatief: haakjes na ·)
+  var bDeel = b < 0
+    ? '(-' + coefStr(b) + '<i>' + x + '</i>)'
+    : coefStr(b) + '<i>' + x + '</i>';
+  var opg = a + ' · ' + bDeel;
+  var ant = antTermHTML(prod,x,true);
+  var antT = prod + x;
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 5,
+    stappen: [
+      opg,
+      '= (' + a + ' · ' + b + ') · <i>' + x + '</i>',
+      '= ' + ant
+    ]
+  };
+}
+
+// Cat 6: letterterm x letterterm
+function genereerCat6() {
+  var x = kiesLetter(), y = kiesLetter([x]);
+  var a = gnul(-8,8), b = gnul(-8,8);
+  var prod = a * b;
+  // Opgave: ax · by (negatieve termen: haakjes na ·)
+  var aDeel = a < 0
+    ? '(-' + coefStr(a) + '<i>' + x + '</i>)'
+    : coefStr(a) + '<i>' + x + '</i>';
+  var bDeel = b < 0
+    ? '(-' + coefStr(b) + '<i>' + y + '</i>)'
+    : coefStr(b) + '<i>' + y + '</i>';
+  var opg = aDeel + ' · ' + bDeel;
+  var ant = antTermHTML(prod, x+y, true);
+  var antT = prod + x + y;
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 6,
+    stappen: [
+      opg,
+      '= (' + a + ' · ' + b + ') · <i>' + x + '</i> · <i>' + y + '</i>',
+      '= ' + ant
+    ]
+  };
+}
+
+// Cat 7: factor x haakjes uitwerken (factor nooit 1 of -1)
+// Opgave: f(ax + b) of (ax + b)·f
+// Oplossing: direct het antwoord, geen tussenstap
+function genereerCat7() {
+  var x = kiesLetter();
+  var f = gnul(-8,8);
+  if (Math.abs(f) === 1) return genereerCat7();
+  var a = gnul(-9,9), b = gnul(1,9);
+  var p1 = f * a, p2 = f * b;
+  var binnen = termEerst(a,x) + getalNa(b);
+  var kant = Math.random() < 0.5;
+  var fDeel = f < 0 ? '(' + f + ')' : String(f);
+  var opg = kant
+    ? fDeel + '(' + binnen + ')'
+    : '(' + binnen + ') · ' + fDeel;
+  var absP1 = Math.abs(p1), absP2 = Math.abs(p2);
+  var ant = antTermHTML(p1,x,true) + (p2 >= 0 ? ' + ' + p2 : ' - ' + absP2);
+  var antT = p1 + x + (p2 >= 0 ? '+' : '') + p2;
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 7,
+    stappen: [opg, '= ' + ant]
+  };
+}
+
+// Cat 8: minteken voor haakjes: -(ax + b)
+// Oplossing: -1(ax + b) -> antwoord
+function genereerCat8() {
+  var x = kiesLetter();
+  var a = gnul(-9,9), b = gnul(1,9);
+  var binnen = termEerst(a,x) + getalNa(b);
+  var opg = '-(' + binnen + ')';
+  var r1 = -a, r2 = -b;
+  // Stap 1: toon -1 voor haakjes
+  var stap1 = '-<span class="coef-een">1</span>(' + binnen + ')';
+  // Stap 2: uitgewerkt, gewone schrijfwijze
+  var uitgewerkt = antTermHTML(r1,x,true) + antGetalHTML(r2,false);
+  var ant = uitgewerkt;
+  var antT = r1 + x + (r2 >= 0 ? '+' : '') + r2;
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 8,
+    stappen: [opg, '= ' + stap1, '= ' + ant]
+  };
+}
+
+// Cat 9: uitwerken + herleiden: ax +/- f(bx + c), f mag nu ook 1 of -1 zijn
+// f=1:  ax + 1(bx + c)  -> ax + bx + c
+// f=-1: ax - 1(bx + c)  -> ax - bx - c
+function genereerCat9() {
+  var x = kiesLetter();
+  var a = gnul(-7,7);
+  var f = gnul(-6,6); // mag 1 of -1 zijn
+  var b = gnul(1,7);
+  var c = gnul(1,9);
+  var fp1 = f * b, fp2 = f * c;
+  var totX = a + fp1;
+  if (totX === 0) return genereerCat9();
+
+  // Opgave: ax + f(bx + c)
+  // f=1: + 1(bx+c) -> toon als + 1(bx+c) met zichtbare 1? Nee: opgave toont geen 1
+  // In opgave: teken voor haakjes +/-, |f| of niets als |f|=1
+  var aDeel = termEerst(a,x);
+  var fAbs = Math.abs(f);
+  var fStr = fAbs === 1 ? '' : String(fAbs);
+  var teken = f > 0 ? ' + ' : ' - ';
+  var bStr = b === 1 ? '' : String(b);
+  var opg = aDeel + teken + fStr + '(' + bStr + '<i>' + x + '</i> + ' + c + ')';
+
+  // Antwoord
+  var ant = antTermHTML(totX,x,true);
+  var antT = String(totX) + x;
+  if (fp2 > 0) { ant += ' + ' + fp2; antT += '+' + fp2; }
+  else if (fp2 < 0) { ant += ' - ' + Math.abs(fp2); antT += fp2; }
+
+  // Stap 1: toon zichtbare 1 voor haakjes indien f=1 of f=-1
+  var fStrOpl = fAbs === 1 ? '<span class="coef-een">1</span>' : String(fAbs);
+  var stap1 = aDeel + teken + fStrOpl + '(' + b + '<i>' + x + '</i> + ' + c + ')';
+
+  // Stap 2: haakjes uitwerken (gewone schrijfwijze, geen zichtbare 1)
+  var ts = termEerst(a,x);
+  if (fp1 > 0) ts += ' + ' + fp1 + '<i>' + x + '</i>';
+  else ts += ' - ' + Math.abs(fp1) + '<i>' + x + '</i>';
+  if (fp2 > 0) ts += ' + ' + fp2;
+  else ts += ' - ' + Math.abs(fp2);
+
+  // Stap 3: gelijksoortige termen onderstreept
+  var os_a = '<span class="onderstreept">' + termEerstOpl(a,x) + '</span>';
+  var fp1Deel = fp1 > 0
+    ? ' + <span class="onderstreept">' + fp1 + '<i>' + x + '</i></span>'
+    : ' - <span class="onderstreept">' + Math.abs(fp1) + '<i>' + x + '</i></span>';
+  var getalDeel = fp2 > 0 ? ' + ' + fp2 : ' - ' + Math.abs(fp2);
+  var ts2 = os_a + fp1Deel + getalDeel;
+
+  // Als f=1 of f=-1: toon stap1 (met zichtbare 1), anders sla stap1 over
+  var stappenLijst = fAbs === 1
+    ? [opg, '= ' + stap1, '= ' + ts, '= ' + ts2, '= ' + ant]
+    : [opg, '= ' + ts, '= ' + ts2, '= ' + ant];
+
+  return {
+    opgave: opg, antwoord: ant, antwoordText: antT, categorie: 9,
+    stappen: stappenLijst
+  };
+}
+
+var categorieGeneratoren = [
+  genereerCat1, genereerCat2, genereerCat3, genereerCat4,
+  genereerCat5, genereerCat6, genereerCat7, genereerCat8, genereerCat9
+];
+
+function genereerVraag() {
+  var gen = categorieGeneratoren[Math.floor(Math.random() * categorieGeneratoren.length)];
+  return gen();
+}
+
+/* ===== DOBBELSTEENPATRONEN ===== */
+var PATRONEN = {
+  1: [5],
+  2: [1,9],
+  3: [1,5,9],
+  4: [1,3,7,9],
+  5: [1,3,5,7,9],
+  6: [1,3,4,6,7,9]
+};
+
+function toonDobbelsteen(waarde) {
+  for (var i = 1; i <= 9; i++) {
+    document.getElementById('d' + i).classList.remove('zichtbaar');
+  }
+  if (waarde && PATRONEN[waarde]) {
+    PATRONEN[waarde].forEach(function(pos) {
+      document.getElementById('d' + pos).classList.add('zichtbaar');
+    });
+  }
+}
+
+/* ===== NAVIGATIE ===== */
+function toonScherm(id) {
+  document.querySelectorAll('.scherm').forEach(function(s){ s.classList.remove('actief'); });
+  var el = document.getElementById(id);
+  if (el) el.classList.add('actief');
+}
+
+function naarNamen() { toonScherm('scherm-namen'); }
+
+function startSpel() {
+  var namen = [];
+  for (var i = 1; i <= 4; i++) {
+    var val = document.getElementById('naam' + i).value.trim();
+    if (val) namen.push(val);
+  }
+  if (namen.length < 2) {
+    document.getElementById('namen-fout').classList.remove('verborgen');
+    return;
+  }
+  spelers = namen;
+  stappen = new Array(spelers.length).fill(0);
+  eersteSpelerIndex = 0;
+  toonScherm('scherm-spel');
+  nieuweBeurt();
+}
+
+/* ===== SPEL LOGICA ===== */
+
+function nieuweBeurt() {
+  antwoordSpelerIndex = eersteSpelerIndex;
+  huidigVraag = genereerVraag();
+  beurtKlaar = false;
+  dobbelsteenGerold = false;
+
+  toonFase('vraag');
+  updateSpelerBalk();
+  updateScoreBalk();
+
+  document.getElementById('vraag-tekst').innerHTML = huidigVraag.opgave;
+  document.getElementById('antwoord-input').value = '';
+  document.getElementById('antwoord-input').className = 'antwoord-input';
+  document.getElementById('antwoord-input').disabled = false;
+  document.getElementById('knop-controleer').disabled = false;
+  document.getElementById('feedback-blok').className = 'verborgen';
+  document.getElementById('feedback-blok').innerHTML = '';
+  document.getElementById('oplossing-blok').className = 'verborgen oplossing-blok';
+  document.getElementById('oplossing-blok').innerHTML = '';
+  document.getElementById('knop-volgende').classList.add('verborgen');
+
+  updateAntwoordInstructie();
+  document.getElementById('antwoord-input').focus();
+}
+
+function updateAntwoordInstructie() {
+  var naam = spelers[antwoordSpelerIndex];
+  var isEerste = antwoordSpelerIndex === eersteSpelerIndex;
+  var tekst = isEerste
+    ? '<strong>' + naam + '</strong>, jij mag als eerste antwoorden.'
+    : '<strong>' + naam + '</strong>, jij mag nu proberen.';
+  document.getElementById('antwoord-instructie').innerHTML = tekst;
+}
+
+function updateSpelerBalk() {
+  var balk = document.getElementById('speler-balk');
+  balk.innerHTML = '';
+  spelers.forEach(function(naam, i) {
+    var badge = document.createElement('span');
+    badge.className = 'speler-badge';
+    badge.id = 'badge-' + i;
+    if (i === eersteSpelerIndex) badge.classList.add('actief-beurt');
+    if (i === antwoordSpelerIndex && !beurtKlaar) badge.classList.add('mag-antwoorden');
+    badge.textContent = naam;
+    balk.appendChild(badge);
+  });
+  var info = document.getElementById('beurt-info');
+  info.textContent = 'Beurt van ' + spelers[eersteSpelerIndex] + ' · Volgende beurt start bij ' + spelers[(eersteSpelerIndex + 1) % spelers.length];
+}
+
+function updateScoreBalk() {
+  var balk = document.getElementById('score-balk');
+  balk.innerHTML = '';
+  spelers.forEach(function(naam, i) {
+    var item = document.createElement('div');
+    item.className = 'score-item';
+    item.innerHTML = '<div class="score-naam">' + naam + '</div><div class="score-getal">' + stappen[i] + '</div>';
+    balk.appendChild(item);
+  });
+}
+
+function controleerAntwoord() {
+  var invoer = document.getElementById('antwoord-input').value.trim();
+  if (!invoer) return;
+
+  var juist = antwoordenGelijk(invoer, huidigVraag.antwoordText);
+  var naam = spelers[antwoordSpelerIndex];
+  var feedbackEl = document.getElementById('feedback-blok');
+
+  var badge = document.getElementById('badge-' + antwoordSpelerIndex);
+  if (badge) badge.classList.remove('mag-antwoorden');
+
+  if (juist) {
+    document.getElementById('antwoord-input').classList.add('juist');
+    document.getElementById('antwoord-input').disabled = true;
+    document.getElementById('knop-controleer').disabled = true;
+    feedbackEl.className = 'feedback-blok feedback-juist';
+    feedbackEl.innerHTML = '✓ <strong>' + naam + '</strong> heeft het juist! Gooi de dobbelsteen.';
+    if (badge) badge.classList.add('juist');
+    beurtKlaar = true;
+    setTimeout(function(){ toonDobbelsteenfase(naam); }, 900);
+  } else {
+    document.getElementById('antwoord-input').classList.add('fout');
+    if (badge) badge.classList.add('fout');
+
+    // Volgende speler = cyclisch, maar STOP als we terug bij eersteSpelerIndex komen
+    var volgendeIndex = (antwoordSpelerIndex + 1) % spelers.length;
+    var nogKansen = volgendeIndex !== eersteSpelerIndex;
+
+    if (nogKansen) {
+      feedbackEl.className = 'feedback-blok feedback-fout';
+      feedbackEl.innerHTML = '✗ <strong>' + naam + '</strong> heeft het fout. <strong>' + spelers[volgendeIndex] + '</strong> mag nu proberen.';
+      antwoordSpelerIndex = volgendeIndex;
+      setTimeout(function() {
+        document.getElementById('antwoord-input').value = '';
+        document.getElementById('antwoord-input').className = 'antwoord-input';
+        document.getElementById('antwoord-input').disabled = false;
+        document.getElementById('knop-controleer').disabled = false;
+        updateAntwoordInstructie();
+        updateSpelerBalk();
+        document.getElementById('antwoord-input').focus();
+      }, 1200);
+    } else {
+      feedbackEl.className = 'feedback-blok feedback-fout';
+      feedbackEl.innerHTML = '✗ <strong>' + naam + '</strong> heeft het ook fout. Niemand gooit de dobbelsteen.';
+      document.getElementById('antwoord-input').disabled = true;
+      document.getElementById('knop-controleer').disabled = true;
+      beurtKlaar = true;
+      setTimeout(toonOplossing, 1000);
+    }
+  }
+}
+
+function toonOplossing() {
+  var oplEl = document.getElementById('oplossing-blok');
+  oplEl.className = 'oplossing-blok';
+  var stappenHTML = huidigVraag.stappen.map(function(s){ return '<div class="stap-rij">' + s + '</div>'; }).join('');
+  oplEl.innerHTML = '<div class="opl-titel">Oplossing</div>' + stappenHTML;
+  document.getElementById('knop-volgende').classList.remove('verborgen');
+}
+
+function toonDobbelsteenfase(naam) {
+  toonFase('dobbelsteen');
+  toonDobbelsteen(null);
+  document.getElementById('stappen-tekst').classList.add('verborgen');
+  document.getElementById('knop-na-dobbel').classList.add('verborgen');
+  document.getElementById('dobbelsteen-instructie').innerHTML =
+    '<strong>' + naam + '</strong>, klik op de dobbelsteen om te gooien!';
+  dobbelsteenGerold = false;
+}
+
+function rolDobbelsteen() {
+  if (dobbelsteenGerold) return;
+  var dobbel = document.getElementById('dobbelsteen');
+  dobbel.classList.add('rolt');
+  var teller = 0;
+  var interval = setInterval(function() {
+    toonDobbelsteen(Math.floor(Math.random() * 6) + 1);
+    teller++;
+    if (teller > 12) {
+      clearInterval(interval);
+      var uitkomst = Math.floor(Math.random() * 6) + 1;
+      toonDobbelsteen(uitkomst);
+      dobbel.classList.remove('rolt');
+      dobbelsteenGerold = true;
+
+      // Vind de winnaar van deze beurt (badge met class 'juist')
+      var winnaarIdx = -1;
+      spelers.forEach(function(_, i) {
+        var b = document.getElementById('badge-' + i);
+        if (b && b.classList.contains('juist')) winnaarIdx = i;
+      });
+      if (winnaarIdx >= 0) stappen[winnaarIdx] += uitkomst;
+      updateScoreBalk();
+
+      var tekst = document.getElementById('stappen-tekst');
+      tekst.textContent = uitkomst + (uitkomst !== 1 ? ' stappen vooruit!' : ' stap vooruit!');
+      tekst.classList.remove('verborgen');
+      document.getElementById('knop-na-dobbel').classList.remove('verborgen');
+    }
+  }, 80);
+}
+
+function volgendBeurt() {
+  // Volgende eerste speler = altijd +1 t.o.v. huidige eerste speler
+  eersteSpelerIndex = (eersteSpelerIndex + 1) % spelers.length;
+  nieuweBeurt();
+}
+
+function toonFase(fase) {
+  document.getElementById('fase-vraag').style.display = fase === 'vraag' ? 'block' : 'none';
+  document.getElementById('fase-dobbelsteen').style.display = fase === 'dobbelsteen' ? 'block' : 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    var input = document.getElementById('antwoord-input');
+    if (document.activeElement === input) controleerAntwoord();
+  }
+});
+
+document.getElementById('fase-vraag').style.display = 'block';
+document.getElementById('fase-dobbelsteen').style.display = 'none';
+</script>
+</body>
+</html>
