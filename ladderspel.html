@@ -840,6 +840,7 @@ function genereerCat5() {
 // Cat 6: letterterm x letterterm
 function genereerCat6() {
   var x = kiesLetter(), y = kiesLetter([x]);
+  if (y < x) { var tmp = x; x = y; y = tmp; }
   var a = gnul(-8,8), b = gnul(-8,8);
   var prod = a * b;
   // Opgave: ax · by (negatieve termen: haakjes na ·)
