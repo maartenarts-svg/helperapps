@@ -701,6 +701,13 @@ function antGetalHTML(n, eerst) {
   return ' + ' + n;
 }
 
+// Canonieke antwoordtekst voor vergelijking: coëfficiënt 1 en -1 nooit schrijven
+function termT(coef, letters) {
+  var abs = Math.abs(coef);
+  var cs = abs === 1 ? '' : String(abs);
+  return coef < 0 ? '-' + cs + letters : cs + letters;
+}
+
 /* ===== ANTWOORDVERGELIJKING ===== */
 
 function normaliseer(str) {
@@ -736,7 +743,7 @@ function genereerCat1() {
   var som = a + b;
   var opg = termEerst(a,x) + termNa(b,x);
   var ant = antTermHTML(som,x,true);
-  var antT = som + x;
+  var antT = termT(som, x);
   return {
     opgave: opg, antwoord: ant, antwoordText: antT, categorie: 1,
     stappen: [
@@ -755,7 +762,7 @@ function genereerCat2() {
   if (som === 0) return genereerCat2();
   var opg = termEerst(a,x) + termNa(b,x) + termNa(c,x);
   var ant = antTermHTML(som,x,true);
-  var antT = som + x;
+  var antT = termT(som, x);
   return {
     opgave: opg, antwoord: ant, antwoordText: antT, categorie: 2,
     stappen: [
@@ -776,7 +783,7 @@ function genereerCat3() {
   if (sx===0 || sy===0) return genereerCat3();
   var opg = termEerst(a,x) + termNa(c,y) + termNa(b,x) + termNa(d,y);
   var ant = antTermHTML(sx,x,true) + antTermHTML(sy,y,false);
-  var antT = sx + x + (sy > 0 ? '+' : '') + sy + y;
+  var antT = termT(sx, x) + (sy > 0 ? '+' : '') + termT(sy, y);
   // Tussenstap: termen in originele volgorde (a,x - c,y - b,x - d,y)
   var ts3 = '<span class="onderstreept">' + termEerstOpl(a,x) + '</span>'
     + '<span class="dubbel-onderstreept">' + termNaOpl(c,y) + '</span>'
@@ -796,7 +803,7 @@ function genereerCat4() {
   if (sx===0) return genereerCat4();
   var opg = termEerst(a,x) + getalNa(b) + termNa(c,x) + getalNa(d);
   var ant = antTermHTML(sx,x,true) + ' + ' + sg;
-  var antT = sx + x + '+' + sg;
+  var antT = termT(sx, x) + '+' + sg;
   // Tussenstap: termen in originele volgorde (a,x - b - c,x - d)
   var ts4 = '<span class="onderstreept">' + termEerstOpl(a,x) + '</span>'
     + '<span class="dubbel-onderstreept">' + getalNa(b) + '</span>'
@@ -819,7 +826,7 @@ function genereerCat5() {
     : coefStr(b) + '<i>' + x + '</i>';
   var opg = a + ' · ' + bDeel;
   var ant = antTermHTML(prod,x,true);
-  var antT = prod + x;
+  var antT = termT(prod, x);
   return {
     opgave: opg, antwoord: ant, antwoordText: antT, categorie: 5,
     stappen: [
@@ -844,7 +851,7 @@ function genereerCat6() {
     : coefStr(b) + '<i>' + y + '</i>';
   var opg = aDeel + ' · ' + bDeel;
   var ant = antTermHTML(prod, x+y, true);
-  var antT = prod + x + y;
+  var antT = termT(prod, x + y);
   return {
     opgave: opg, antwoord: ant, antwoordText: antT, categorie: 6,
     stappen: [
@@ -892,7 +899,7 @@ function genereerCat8() {
   // Stap 2: uitgewerkt, gewone schrijfwijze
   var uitgewerkt = antTermHTML(r1,x,true) + antGetalHTML(r2,false);
   var ant = uitgewerkt;
-  var antT = r1 + x + (r2 >= 0 ? '+' : '') + r2;
+  var antT = termT(r1, x) + (r2 >= 0 ? '+' : '') + r2;
   return {
     opgave: opg, antwoord: ant, antwoordText: antT, categorie: 8,
     stappen: [opg, '= ' + stap1, '= ' + ant]
@@ -924,7 +931,7 @@ function genereerCat9() {
 
   // Antwoord
   var ant = antTermHTML(totX,x,true);
-  var antT = String(totX) + x;
+  var antT = termT(totX, x);
   if (fp2 > 0) { ant += ' + ' + fp2; antT += '+' + fp2; }
   else if (fp2 < 0) { ant += ' - ' + Math.abs(fp2); antT += fp2; }
 
