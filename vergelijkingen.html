@@ -308,13 +308,14 @@ function _fiBr(val,fs){_fiRuler.style.fontSize=fs;_fiRuler.textContent=val||'';r
 function getFracVal(id){return _fr[id]?_fr[id].getVal():(document.getElementById(id)||{value:''}).value;}
 function clearFrac(id){if(_fr[id])_fr[id].clear();else{const e=document.getElementById(id);if(e)e.value='';}}
 function setFracErr(id,hasErr){const h=document.getElementById(id+'-fw');if(h)h.classList.toggle('fout',hasErr);}
-function _extTeller(tekst){
+function _extTeller(tekst,heeftVorig=false){
   let opIdx=-1,opChar='';
   for(let i=tekst.length-1;i>=0;i--){if('+-*·:='.includes(tekst[i])){opIdx=i;opChar=tekst[i];break;}}
   if(opIdx===-1)return{prefix:'',teller:tekst};
   if(opChar==='+'||opChar==='*'||opChar==='·'||opChar===':'||opChar==='=')return{prefix:tekst.slice(0,opIdx+1),teller:tekst.slice(opIdx+1)};
   const voor=tekst.slice(0,opIdx).trimEnd();
   if(voor.length>0&&/[a-zA-Z0-9]$/.test(voor))return{prefix:tekst.slice(0,opIdx+1),teller:tekst.slice(opIdx+1)};
+  if(heeftVorig&&opIdx===0)return{prefix:tekst.slice(0,1),teller:tekst.slice(1)};
   return{prefix:tekst.slice(0,opIdx),teller:tekst.slice(opIdx)};
 }
 function initFracWidget(hostId,regId,opts={}){
@@ -337,7 +338,7 @@ function initFracWidget(hostId,regId,opts={}){
       if(e.key==='/'){
         e.preventDefault();
         const voor=el.value.slice(0,pos),achter=el.value.slice(pos);
-        const{prefix,teller}=_extTeller(voor);
+        const{prefix,teller}=_extTeller(voor,idx>0);
         el.value=prefix;el.style.width=br(prefix)+'px';
         const fSeg=maakFrac(teller),aSeg=maakTxt(achter);
         seg.splice(idx+1,0,fSeg,aSeg);inserNa(fSeg.el,el);inserNa(aSeg.el,fSeg.el);

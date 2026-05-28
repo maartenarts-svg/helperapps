@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vergelijkingen – Stappen visualiseren</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f1f5f9;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;--accent:#3b82f6;
+  --pos:#2563eb;--neg:#f97316;
+  --radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.app-header{background:var(--surface);border-bottom:2px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);}
+.app-title{font-size:1.15rem;font-weight:900;letter-spacing:-.3px;}
+.app-title span{color:var(--accent);}
+
+.btn{padding:8px 16px;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#2563eb;transform:translateY(-1px);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1.5px solid var(--border);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-sm{padding:5px 12px;font-size:.8rem;}
+.btn-add{background:var(--surface);border:2px dashed var(--border);color:var(--muted);font-size:.95rem;padding:9px 28px;border-radius:10px;}
+.btn-add:hover{border-color:var(--accent);color:var(--accent);}
+
+.stappen{padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+
+.stap-rij{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow);animation:fadein .25s ease;}
+.stap-header{font-size:.62rem;font-weight:900;text-transform:uppercase;letter-spacing:1.4px;color:var(--accent);margin-bottom:10px;}
+.stap-inhoud{display:grid;grid-template-columns:200px minmax(220px,1fr) 280px;gap:16px;align-items:center;}
+@media(max-width:780px){.stap-inhoud{grid-template-columns:1fr;}}
+
+.invoer-deel{display:flex;flex-direction:column;gap:7px;}
+.verg-input{padding:9px 13px;border:2px solid var(--border);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:var(--text);background:var(--surface2);transition:border-color .2s;outline:none;width:100%;}
+.verg-input:focus-within{border-color:var(--accent);}
+.invoer-hint{font-size:.72rem;color:var(--muted);font-style:italic;}
+
+.alg-deel{display:flex;align-items:center;justify-content:center;min-height:40px;}
+.alg{font-family:'JetBrains Mono',monospace;}
+.alg-rij{display:grid;grid-template-columns:1fr 26px 1fr;align-items:baseline;}
+.alg-lid{font-size:.96rem;font-weight:700;padding:2px 4px;line-height:1.9;}
+.alg-lid.l{text-align:right;}.alg-lid.r{text-align:left;}
+.alg-eq{font-size:.96rem;font-weight:900;color:var(--muted);text-align:center;}
+.alg-letter{font-style:italic;}
+.alg-breuk{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.15;font-size:.84em;margin:0 1px;}
+.alg-breuk .at{padding:0 2px;border-bottom:1.5px solid currentColor;line-height:1.3;}
+.alg-breuk .an{padding:0 2px;line-height:1.3;}
+
+.ws-wrap{width:100%;max-width:280px;}
+
+.voeg-toe-zone{padding:0 20px 24px;}
+
+.frac-host{display:inline-flex;align-items:center;flex-wrap:nowrap;cursor:text;outline:none;}
+.frac-host:focus-within{border-color:var(--accent);}
+.fi-txt{outline:none;border:none;background:transparent;font-family:inherit;font-size:inherit;font-weight:inherit;color:inherit;padding:0;line-height:1;}
+.fi-frac{display:inline-flex;flex-direction:column;align-items:center;margin:0 2px;}
+.fi-frac input{outline:none;border:none;background:transparent;font-family:inherit;font-size:inherit;font-weight:inherit;text-align:center;padding:0;line-height:1.35;color:inherit;}
+.fi-lijn{height:1.5px;background:currentColor;min-width:16px;}
+
+@keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">⚖️ Vergelijkingen <span>stap voor stap</span></div>
+  <button class="btn btn-secondary btn-sm" onclick="location.reload()">↺ Reset</button>
+</header>
+
+<div class="stappen" id="stappen"></div>
+
+<div class="voeg-toe-zone" id="voeg-toe-zone" style="display:none">
+  <button class="btn btn-add" onclick="addRow()">+ Volgende stap</button>
+</div>
+
+<script>
+// ══ BREUK-INVOER WIDGET ══
+const _fr={};
+const _fiRuler=document.createElement('span');
+_fiRuler.setAttribute('aria-hidden','true');
+Object.assign(_fiRuler.style,{position:'fixed',top:'-9999px',left:'-9999px',
+  visibility:'hidden',whiteSpace:'nowrap',pointerEvents:'none',
+  fontFamily:"'JetBrains Mono',monospace",fontWeight:'700'});
+document.body.appendChild(_fiRuler);
+function _fiBr(val,fs){_fiRuler.style.fontSize=fs;_fiRuler.textContent=val||'';return Math.max(8,_fiRuler.offsetWidth+4);}
+function getFracVal(id){return _fr[id]?_fr[id].getVal():(document.getElementById(id)||{value:''}).value;}
+
+function _extTeller(tekst,heeftVorig=false){
+  let opIdx=-1,opChar='';
+  for(let i=tekst.length-1;i>=0;i--){if('+-*·:='.includes(tekst[i])){opIdx=i;opChar=tekst[i];break;}}
+  if(opIdx===-1)return{prefix:'',teller:tekst};
+  if(opChar==='+'||opChar==='*'||opChar==='·'||opChar===':'||opChar==='=')return{prefix:tekst.slice(0,opIdx+1),teller:tekst.slice(opIdx+1)};
+  const voor=tekst.slice(0,opIdx).trimEnd();
+  if(voor.length>0&&/[a-zA-Z0-9]$/.test(voor))return{prefix:tekst.slice(0,opIdx+1),teller:tekst.slice(opIdx+1)};
+  if(heeftVorig&&opIdx===0)return{prefix:tekst.slice(0,1),teller:tekst.slice(1)};
+  return{prefix:tekst.slice(0,opIdx),teller:tekst.slice(opIdx)};
+}
+
+function initFracWidget(hostId,regId,opts={}){
+  const host=document.getElementById(hostId);if(!host)return;
+  const fs=window.getComputedStyle(host).fontSize||'0.9rem';
+  function br(v){return _fiBr(v,fs);}
+  const seg=[];
+  function leesWaarde(){return seg.map(s=>s.type==='txt'?s.el.value:`${s.tIn.value}/${s.nIn.value}`).join('');}
+  function wijzigd(){if(opts.onChange)opts.onChange();}
+  function inserNa(n,r){if(r.nextSibling)host.insertBefore(n,r.nextSibling);else host.appendChild(n);}
+  function maakTxt(iv){
+    const el=document.createElement('input');
+    el.type='text';el.className='fi-txt';el.value=iv||'';
+    el.style.width=br(el.value)+'px';
+    el.addEventListener('input',()=>{el.style.width=br(el.value)+'px';wijzigd();});
+    el.addEventListener('keydown',e=>{
+      const pos=el.selectionStart,idx=seg.indexOf(s);
+      if(e.key==='*'){e.preventDefault();const p=pos,v=el.value;el.value=v.slice(0,p)+'·'+v.slice(el.selectionEnd);el.setSelectionRange(p+1,p+1);el.style.width=br(el.value)+'px';wijzigd();return;}
+      if(e.key==='/'){
+        e.preventDefault();
+        const voor=el.value.slice(0,pos),achter=el.value.slice(pos);
+        const{prefix,teller}=_extTeller(voor,idx>0);
+        el.value=prefix;el.style.width=br(prefix)+'px';
+        const fSeg=maakFrac(teller),aSeg=maakTxt(achter);
+        seg.splice(idx+1,0,fSeg,aSeg);inserNa(fSeg.el,el);inserNa(aSeg.el,fSeg.el);
+        teller?fSeg.nIn.focus():fSeg.tIn.focus();wijzigd();return;
+      }
+      if(e.key==='ArrowLeft'&&pos===0&&el.selectionEnd===0){if(idx>0&&seg[idx-1].type==='frac'){e.preventDefault();const n=seg[idx-1].nIn;n.focus();n.setSelectionRange(n.value.length,n.value.length);}return;}
+      if(e.key==='ArrowRight'&&pos===el.value.length){if(idx<seg.length-1&&seg[idx+1].type==='frac'){e.preventDefault();const t=seg[idx+1].tIn;t.focus();t.setSelectionRange(0,0);}return;}
+      if(e.key==='Backspace'&&pos===0&&el.value===''){if(idx>0&&seg[idx-1].type==='frac'){e.preventDefault();verwijderFrac(seg[idx-1],s);}}
+      if(e.key==='Enter'){e.preventDefault();if(opts.onEnter)opts.onEnter();}
+    });
+    const s={type:'txt',el};return s;
+  }
+  function maakFrac(tv){
+    const el=document.createElement('span');el.className='fi-frac';
+    const tIn=document.createElement('input');tIn.type='text';tIn.value=tv||'';
+    const lijn=document.createElement('div');lijn.className='fi-lijn';
+    const nIn=document.createElement('input');nIn.type='text';nIn.value='';
+    el.appendChild(tIn);el.appendChild(lijn);el.appendChild(nIn);
+    function updBr(){const tw=br(tIn.value),nw=br(nIn.value);tIn.style.width=tw+'px';nIn.style.width=nw+'px';lijn.style.width=Math.max(tw,nw)+'px';wijzigd();}
+    updBr();tIn.addEventListener('input',updBr);nIn.addEventListener('input',updBr);
+    function ster(inp,e){if(e.key!=='*')return false;e.preventDefault();const p=inp.selectionStart;inp.value=inp.value.slice(0,p)+'·'+inp.value.slice(inp.selectionEnd);inp.setSelectionRange(p+1,p+1);updBr();return true;}
+    tIn.addEventListener('keydown',e=>{
+      const pos=tIn.selectionStart,idx=seg.indexOf(s);
+      if(ster(tIn,e))return;
+      if(e.key==='/'){e.preventDefault();nIn.focus();return;}
+      if(e.key==='ArrowRight'&&pos===tIn.value.length){e.preventDefault();nIn.focus();nIn.setSelectionRange(0,0);return;}
+      if(e.key==='ArrowLeft'&&pos===0){if(idx>0&&seg[idx-1].type==='txt'){e.preventDefault();const p=seg[idx-1].el;p.focus();p.setSelectionRange(p.value.length,p.value.length);}return;}
+      if(e.key==='Backspace'&&tIn.value===''){e.preventDefault();verwijderFrac(s,idx<seg.length-1?seg[idx+1]:null);}
+    });
+    nIn.addEventListener('keydown',e=>{
+      const pos=nIn.selectionStart,idx=seg.indexOf(s);
+      if(ster(nIn,e))return;
+      if(e.key==='Tab'||e.key==='Enter'){e.preventDefault();if(e.key==='Enter'&&opts.onEnter){opts.onEnter();return;}if(idx<seg.length-1){const v=seg[idx+1].el;v.focus();v.setSelectionRange(0,0);}return;}
+      if(e.key==='/'){e.preventDefault();const nF=maakFrac(''),a=maakTxt('');seg.splice(idx+1,0,nF,a);inserNa(nF.el,el);inserNa(a.el,nF.el);nF.tIn.focus();wijzigd();return;}
+      if(e.key==='ArrowLeft'&&pos===0){e.preventDefault();tIn.focus();tIn.setSelectionRange(tIn.value.length,tIn.value.length);return;}
+      if(e.key==='ArrowRight'&&pos===nIn.value.length){if(idx<seg.length-1&&seg[idx+1].type==='txt'){e.preventDefault();seg[idx+1].el.focus();seg[idx+1].el.setSelectionRange(0,0);}return;}
+      if(e.key==='Backspace'&&nIn.value===''){e.preventDefault();tIn.focus();tIn.setSelectionRange(tIn.value.length,tIn.value.length);}
+    });
+    const s={type:'frac',el,tIn,nIn};return s;
+  }
+  function verwijderFrac(fSeg,naSeg){
+    const idx=seg.indexOf(fSeg);if(idx<0)return;
+    const vSeg=(idx>0&&seg[idx-1].type==='txt')?seg[idx-1]:null;
+    const aSeg=naSeg||(idx<seg.length-1&&seg[idx+1].type==='txt'?seg[idx+1]:null);
+    const curPos=vSeg?vSeg.el.value.length:0;
+    if(vSeg&&aSeg){vSeg.el.value+=aSeg.el.value;vSeg.el.style.width=br(vSeg.el.value)+'px';seg.splice(idx,2);host.removeChild(fSeg.el);host.removeChild(aSeg.el);}
+    else{seg.splice(idx,1);host.removeChild(fSeg.el);}
+    if(vSeg){vSeg.el.focus();vSeg.el.setSelectionRange(curPos,curPos);}wijzigd();
+  }
+  host.addEventListener('click',e=>{if(e.target===host){const l=[...seg].reverse().find(s=>s.type==='txt');if(l){l.el.focus();l.el.setSelectionRange(l.el.value.length,l.el.value.length);}}});
+  const begin=maakTxt('');seg.push(begin);host.appendChild(begin.el);
+  _fr[regId]={getVal:leesWaarde};
+}
+
+// ══ BREUK ══
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;}
+class Br{
+  constructor(t,n=1){
+    if(n===0)throw new Error('n=0');
+    const g=gcd(Math.abs(t),Math.abs(n)),s=n<0?-1:1;
+    this.t=s*t/g;this.n=s*n/g;
+  }
+  static v(x){
+    if(x instanceof Br)return x;
+    if(typeof x==='number'){
+      if(Number.isInteger(x))return new Br(x);
+      const s=Math.sign(x);let v=Math.abs(x);
+      let[p0,p1,q0,q1]=[0,1,1,0];let r=v;
+      for(let i=0;i<40;i++){
+        const a=Math.floor(r);[p0,p1]=[p1,a*p1+p0];[q0,q1]=[q1,a*q1+q0];
+        if(q1&&Math.abs(p1/q1-v)<1e-9)return new Br(s*p1,q1);
+        const rest=r-a;if(rest<1e-10)break;r=1/rest;
+      }
+      return new Br(Math.round(s*v*10000),10000);
+    }
+    return null;
+  }
+  plus(b){b=Br.v(b);return new Br(this.t*b.n+b.t*this.n,this.n*b.n);}
+  min(b){b=Br.v(b);return new Br(this.t*b.n-b.t*this.n,this.n*b.n);}
+  maal(b){b=Br.v(b);return new Br(this.t*b.t,this.n*b.n);}
+  deel(b){b=Br.v(b);return new Br(this.t*b.n,this.n*b.t);}
+  abs(){return new Br(Math.abs(this.t),this.n);}
+  isNul(){return this.t===0;}
+  isPos(){return this.t>0;}
+  eq(b){b=Br.v(b);return this.t===b.t&&this.n===b.n;}
+  val(){return this.t/this.n;}
+}
+const B0=new Br(0),B1=new Br(1);
+
+// ══ PARSER ══
+function parsB(s){
+  s=s.trim();
+  if(s.includes('/')){const[a,b]=s.split('/').map(Number);if(isNaN(a)||isNaN(b)||b===0)return null;return new Br(a,b);}
+  const n=Number(s);return isNaN(n)?null:new Br(n);
+}
+function extractLetterCoef(t,letter){
+  const d=t.replace(letter,'').trim();
+  if(d===''||d==='+')return B1;
+  if(d==='-')return new Br(-1);
+  return parsB(d);
+}
+function parsTermOnb(t,letter){
+  if(t.includes(':')){
+    const ci=t.indexOf(':');
+    const den=parsB(t.slice(ci+1).trim());
+    if(!den||den.isNul())return null;
+    const c=extractLetterCoef(t.slice(0,ci).trim(),letter);
+    return c===null?null:c.deel(den);
+  }
+  return extractLetterCoef(t,letter);
+}
+function parsTermGet(t){
+  if(t.includes(':')){
+    const ci=t.indexOf(':');
+    const num=parsB(t.slice(0,ci).trim());
+    const den=parsB(t.slice(ci+1).trim());
+    if(!num||!den||den.isNul())return null;
+    return num.deel(den);
+  }
+  return parsB(t);
+}
+function parsLid(s){
+  s=s.trim().replace(/\s+/g,'');
+  s=s.replace(/\((-\d+)\)/g,'$1'); // (-n) → -n voor berekening
+  const lm=s.match(/[a-zA-Z]/);const letter=lm?lm[0]:null;
+  let norm=s.replace(/([^+\-:eE])(\-)/g,'$1+$2'); // : toegevoegd aan uitsluitingsset
+  if(norm.startsWith('+'))norm=norm.slice(1);
+  const termen=norm.split('+').filter(t=>t!=='');
+  let coOnb=B0,coGet=B0;
+  for(let t of termen){
+    t=t.trim();
+    if(letter&&t.includes(letter)){
+      const c=parsTermOnb(t,letter);if(c===null)return null;
+      coOnb=coOnb.plus(c);
+    }else{
+      const g=parsTermGet(t);if(!g)return null;coGet=coGet.plus(g);
+    }
+  }
+  return{coOnb,coGet,letter};
+}
+function parsVerg(s){
+  s=s.trim();const d=s.split('=');if(d.length!==2)return null;
+  const ll=parsLid(d[0]),rl=parsLid(d[1]);if(!ll||!rl)return null;
+  return{ll,rl,letter:ll.letter||rl.letter||'x'};
+}
+function berekenOpl(p){
+  const a=p.ll.coOnb,b=p.ll.coGet,c=p.rl.coOnb,d=p.rl.coGet;
+  const links=a.min(c);if(links.isNul())return null;
+  return d.min(b).deel(links);
+}
+
+// ══ SVG HELPERS ══
+function svgG(){return document.createElementNS('http://www.w3.org/2000/svg','g');}
+function svgR(x,y,w,h,rx,fill,stroke){
+  const e=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('width',w);e.setAttribute('height',h);
+  e.setAttribute('rx',rx);e.setAttribute('fill',fill);e.setAttribute('stroke',stroke);e.setAttribute('stroke-width','1.5');return e;
+}
+function svgC(cx,cy,r,fill,stroke){
+  const e=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  e.setAttribute('cx',cx);e.setAttribute('cy',cy);e.setAttribute('r',r);
+  e.setAttribute('fill',fill);e.setAttribute('stroke',stroke);e.setAttribute('stroke-width','1.5');return e;
+}
+function svgArc(cx,cy,r,frac,fill){
+  const a=frac*2*Math.PI,x1=cx,y1=cy-r,x2=cx+r*Math.sin(a),y2=cy-r*Math.cos(a),gr=frac>0.5?1:0;
+  const e=document.createElementNS('http://www.w3.org/2000/svg','path');
+  e.setAttribute('d',`M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 ${gr} 1 ${x2} ${y2}Z`);
+  e.setAttribute('fill',fill);return e;
+}
+
+// ══ WEERGAVE (LETTERLIJK) ══
+function renderLiteraal(str){
+  let html='',i=0,last='start';
+  while(i<str.length){
+    if(str[i]===' '){i++;continue;}
+    // breuk van fracWidget: getal/getal
+    const fm=str.slice(i).match(/^(-?\d+)\/(\d+)/);
+    if(fm){
+      const t=fm[1],n=fm[2];
+      const td=t.startsWith('-')?'−'+t.slice(1):t;
+      html+=`<span class="alg-breuk"><span class="at">${td}</span><span class="an">${n}</span></span>`;
+      i+=fm[0].length;last='num';continue;
+    }
+    const ch=str[i];
+    if(/[a-zA-Z]/.test(ch)){html+=`<span class="alg-letter">${ch}</span>`;last='let';i++;continue;}
+    if(/\d/.test(ch)){let n='';while(i<str.length&&/[\d.]/.test(str[i]))n+=str[i++];html+=n;last='num';continue;}
+    if(ch==='+'){html+=' + ';last='op';i++;continue;}
+    if(ch==='-'){
+      const bin=last==='num'||last==='let'||last==='close';
+      html+=bin?' − ':'−';last='op';i++;continue;
+    }
+    if(ch==='·'||ch==='*'){html+=' · ';last='op';i++;continue;}
+    if(ch===':'){html+=' : ';last='op';i++;continue;}
+    if(ch==='='){html+=' = ';last='op';i++;continue;}
+    if(ch==='('){html+='(';last='open';i++;continue;}
+    if(ch===')'){html+=')';last='close';i++;continue;}
+    html+=ch;i++;
+  }
+  return html.trim();
+}
+
+// ══ GLOBALE STATE ══
+let baseOpl=null;
+let rows=[];
+const CX=250,CY=222;
+
+// ══ SVG PER RIJ ══
+function makeSVG(id){
+  return`<svg viewBox="0 0 500 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible;">
+    <rect x="228" y="248" width="44" height="12" rx="4" fill="#94a3b8"/>
+    <rect x="238" y="224" width="24" height="26" rx="3" fill="#64748b"/>
+    <circle cx="250" cy="222" r="6" fill="#334155"/>
+    <g id="balk-g-${id}">
+      <rect x="90" y="218" width="320" height="8" rx="4" fill="#475569"/>
+      <line x1="135" y1="218" x2="135" y2="196" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="365" y1="218" x2="365" y2="196" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="95"  y="184" width="80" height="13" rx="5" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
+      <rect x="325" y="184" width="80" height="13" rx="5" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
+    </g>
+    <g id="sym-l-${id}"></g>
+    <g id="sym-r-${id}"></g>
+  </svg>`;
+}
+
+// ══ RIJEN ══
+function addRow(){
+  const rowId=rows.length+1;
+  const row={id:rowId,hHoek:0,animId:null,schaal:{l:[],r:[]}};
+  rows.push(row);
+
+  const div=document.createElement('div');
+  div.className='stap-rij';
+  div.id=`stap-rij-${rowId}`;
+  div.innerHTML=`
+    <div class="stap-header">Stap ${rowId}</div>
+    <div class="stap-inhoud">
+      <div class="invoer-deel">
+        <div class="verg-input frac-host" id="vi${rowId}-fw"></div>
+        <button class="btn btn-primary btn-sm" onclick="visualiseerRij(${rowId})">Visualiseer ▶</button>
+        ${rowId===1?'<span class="invoer-hint">Gebruik / voor breukstreep</span>':''}
+      </div>
+      <div class="alg-deel" id="alg-deel-${rowId}" style="visibility:hidden;">
+        <div class="alg" id="alg-${rowId}"></div>
+      </div>
+      <div class="ws-wrap">${makeSVG(rowId)}</div>
+    </div>`;
+  document.getElementById('stappen').appendChild(div);
+  document.getElementById('voeg-toe-zone').style.display='none';
+
+  initFracWidget(`vi${rowId}-fw`,`vi${rowId}`,{onEnter:()=>visualiseerRij(rowId)});
+  setTimeout(()=>{
+    const fw=document.getElementById(`vi${rowId}-fw`);
+    if(fw){const inp=fw.querySelector('input');if(inp)inp.focus();}
+  },30);
+}
+
+function clearRowsAfter(rowId){
+  rows.filter(r=>r.id>rowId).forEach(r=>{
+    if(r.animId)cancelAnimationFrame(r.animId);
+    const el=document.getElementById(`stap-rij-${r.id}`);
+    if(el)el.remove();
+    delete _fr[`vi${r.id}`];
+  });
+  rows=rows.filter(r=>r.id<=rowId);
+  document.getElementById('voeg-toe-zone').style.display='none';
+}
+
+function visualiseerRij(rowId){
+  const row=rows.find(r=>r.id===rowId);
+  if(!row)return;
+  const s=getFracVal(`vi${rowId}`);
+  const p=parsVerg(s);
+  if(!p){alert('Ongeldige vergelijking. Voorbeeld: 2x+3=9');return;}
+
+  if(rowId===1){
+    const opl=berekenOpl(p);
+    if(!opl){alert('De basisvergelijking heeft geen unieke oplossing.');return;}
+    if(rows.length>1)clearRowsAfter(1);
+    baseOpl=opl;
+  }
+
+  row.schaal={l:[],r:[]};
+  vulKantRij(row,'l',p.ll.coOnb,p.ll.coGet);
+  vulKantRij(row,'r',p.rl.coOnb,p.rl.coGet);
+
+  const algEl=document.getElementById(`alg-${rowId}`);
+  algEl.innerHTML='';
+  const r=document.createElement('div');
+  r.className='alg-rij';
+  const eqIdx=s.indexOf('=');
+  const lDisp=renderLiteraal(s.slice(0,eqIdx));
+  const rDisp=renderLiteraal(s.slice(eqIdx+1));
+  r.innerHTML=`<div class="alg-lid l">${lDisp}</div><div class="alg-eq">=</div><div class="alg-lid r">${rDisp}</div>`;
+  algEl.appendChild(r);
+  document.getElementById(`alg-deel-${rowId}`).style.visibility='visible';
+
+  const ml=massaRij(row,'l');
+  const mr=massaRij(row,'r');
+  const diff=mr.min(ml).val();
+  animHoekRij(row,Math.max(-18,Math.min(18,diff*1.5)));
+
+  if(rowId===rows.length){
+    document.getElementById('voeg-toe-zone').style.display='block';
+  }
+}
+
+function vulKantRij(row,k,coOnb,coGet){
+  if(!coOnb.isNul())row.schaal[k].push({type:'onb',sign:coOnb.isPos()?1:-1,waarde:coOnb.abs()});
+  if(!coGet.isNul())row.schaal[k].push({type:'get',sign:coGet.isPos()?1:-1,waarde:coGet.abs()});
+}
+
+function massaRij(row,kant){
+  if(!baseOpl)return B0;
+  return row.schaal[kant].reduce((a,item)=>{
+    const b=item.type==='onb'?item.waarde.maal(baseOpl):item.waarde;
+    return a.plus(b.maal(new Br(item.sign)));
+  },B0);
+}
+
+function animHoekRij(row,doel){
+  if(row.animId)cancelAnimationFrame(row.animId);
+  const van=row.hHoek,t0=performance.now(),DUR=420;
+  function stap(t){
+    const p=Math.min((t-t0)/DUR,1),e=1-Math.pow(1-p,3);
+    row.hHoek=van+(doel-van)*e;
+    const balkG=document.getElementById(`balk-g-${row.id}`);
+    if(balkG)balkG.setAttribute('transform',`rotate(${row.hHoek},${CX},${CY})`);
+    tekenSymRij(row);
+    if(p<1)row.animId=requestAnimationFrame(stap);else row.hHoek=doel;
+  }
+  row.animId=requestAnimationFrame(stap);
+}
+
+function schaalPosRij(row,kant){
+  const ox=kant==='l'?135:365,oy=190;
+  const rad=row.hHoek*Math.PI/180,dx=ox-CX,dy=oy-CY;
+  return{
+    x:CX+dx*Math.cos(rad)-dy*Math.sin(rad),
+    y:CY+dx*Math.sin(rad)+dy*Math.cos(rad)
+  };
+}
+
+function tekenSymRij(row){
+  ['l','r'].forEach(k=>{
+    const grp=document.getElementById(`sym-${k}-${row.id}`);
+    if(!grp)return;
+    grp.innerHTML='';
+    const items=row.schaal[k];
+    if(!items.length)return;
+    const pos=schaalPosRij(row,k);
+    const SZ=12,VGAP=2,BASE=pos.y-2;
+    const colX=[pos.x-27,pos.x-13,pos.x+1,pos.x+15];
+    const colH=[0,0,0,0];
+    function colIdx(item){
+      if(item.type==='onb')return item.sign===1?0:1;
+      return item.sign===1?2:3;
+    }
+    for(const item of items){
+      const ci=colIdx(item);
+      const cx=colX[ci];
+      const col=item.sign===1?'#2563eb':'#f97316';
+      const val=item.waarde.val();
+      const n=Math.floor(val);
+      const rem=val-n;
+      for(let i=0;i<n;i++){
+        const sy=BASE-(SZ+VGAP)*colH[ci];
+        colH[ci]++;
+        const g=svgG();
+        if(item.type==='onb'){
+          g.appendChild(svgR(cx,sy-SZ,SZ,SZ,2,col,col));
+        }else{
+          const r=SZ/2;
+          g.appendChild(svgC(cx+r,sy-r,r,col,col));
+        }
+        grp.appendChild(g);
+      }
+      if(rem>0.001){
+        const sy=BASE-(SZ+VGAP)*colH[ci];
+        colH[ci]++;
+        const g=svgG();
+        if(item.type==='onb'){
+          const h=SZ*rem;
+          g.appendChild(svgR(cx,sy-SZ,SZ,SZ,2,'none',col));
+          g.appendChild(svgR(cx,sy-h,SZ,h,2,col,'none'));
+        }else{
+          const r=SZ/2;
+          g.appendChild(svgC(cx+r,sy-r,r,'none',col));
+          g.appendChild(svgArc(cx+r,sy-r,r,rem,col));
+        }
+        grp.appendChild(g);
+      }
+    }
+  });
+}
+
+// ══ START ══
+addRow();
+</script>
+</body>
+</html>
