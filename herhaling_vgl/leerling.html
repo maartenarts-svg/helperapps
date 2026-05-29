@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vergelijkingen — Leerling</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── PASTE JOUW APPS SCRIPT WEB APP URL HIERONDER ── */
+  /* Zie README voor instructies                         */
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent-a: #ff6b6b;
+    --accent-b: #4ecdc4;
+    --accent-c: #ffe66d;
+    --text: #e8eaf0;
+    --text-dim: #7a80a0;
+    --green: #6bcb77;
+    --red: #ff6b6b;
+    --mono: 'Space Mono', monospace;
+    --body: 'Nunito', sans-serif;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; }
+
+  .screen { display: none; min-height: 100vh; padding: 2rem 1rem; max-width: 520px; margin: 0 auto; }
+  .screen.active { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  /* ── Login ── */
+  .login-header { text-align: center; padding: 2rem 0 1rem; }
+  .login-header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; }
+  .login-header p { color: var(--text-dim); margin-top: 0.4rem; font-size: 0.95rem; }
+  .logo-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+
+  input[type=text], input[type=number] {
+    width: 100%; padding: 0.9rem 1rem; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    color: var(--text); font-family: var(--body); font-size: 1rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--accent-b); }
+
+  .btn {
+    width: 100%; padding: 0.9rem; border: none; border-radius: var(--radius);
+    font-family: var(--body); font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: transform 0.1s, opacity 0.2s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent-b); color: #0f1117; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); }
+
+  /* ── Groepskeuze ── */
+  .groep-cards { display: flex; flex-direction: column; gap: 0.75rem; }
+  .groep-card {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 1.1rem 1.25rem;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    display: flex; align-items: flex-start; gap: 1rem;
+  }
+  .groep-card:hover { border-color: var(--accent-b); background: var(--surface2); }
+  .groep-card.selected-a { border-color: var(--accent-a); background: rgba(255,107,107,0.08); }
+  .groep-card.selected-b { border-color: var(--accent-b); background: rgba(78,205,196,0.08); }
+  .groep-card.selected-c { border-color: var(--accent-c); background: rgba(255,230,109,0.08); }
+  .groep-letter {
+    font-family: var(--mono); font-size: 1.6rem; font-weight: 700;
+    min-width: 2.5rem; text-align: center; line-height: 1;
+  }
+  .groep-letter-a { color: var(--accent-a); }
+  .groep-letter-b { color: var(--accent-b); }
+  .groep-letter-c { color: var(--accent-c); }
+  .groep-info h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; }
+  .groep-info p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.4; }
+  .groep-override { font-size: 0.78rem; color: var(--accent-b); margin-top: 0.75rem; padding: 0.4rem 0.75rem; background: rgba(78,205,196,0.1); border-radius: 6px; }
+
+  /* ── Oefeningen ── */
+  .oef-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+  .oef-naam { font-size: 0.95rem; color: var(--text-dim); }
+  .score-badge {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 0.3rem 0.85rem;
+    font-family: var(--mono); font-size: 0.85rem;
+  }
+  .score-badge span { color: var(--accent-b); font-weight: 700; }
+
+  .oef-sectie { display: flex; flex-direction: column; gap: 0.6rem; }
+  .oef-sectie-titel {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-dim); padding: 0.25rem 0;
+    border-bottom: 1px solid var(--border); margin-bottom: 0.25rem;
+  }
+
+  .oef-item {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.1rem;
+    transition: border-color 0.2s;
+  }
+  .oef-item.juist { border-color: var(--green); background: rgba(107,203,119,0.06); }
+  .oef-item.fout-poging { border-color: var(--red); }
+  .oef-item.overgeslagen { opacity: 0.5; }
+
+  .oef-vergelijking {
+    font-family: var(--mono); font-size: 1.2rem; font-weight: 700;
+    margin-bottom: 0.75rem; letter-spacing: -0.01em;
+  }
+  .oef-punten-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+
+  .oef-invoer { display: flex; gap: 0.5rem; align-items: center; }
+  .oef-invoer input { flex: 1; }
+  .oef-invoer .btn-check {
+    width: auto; padding: 0.7rem 1.1rem; flex-shrink: 0;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 0.9rem; cursor: pointer;
+    color: var(--text); font-family: var(--body); font-weight: 700;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .oef-invoer .btn-check:hover { background: var(--border); }
+
+  .oef-feedback {
+    margin-top: 0.6rem; font-size: 0.88rem; padding: 0.5rem 0.75rem;
+    border-radius: 8px; font-weight: 600;
+  }
+  .oef-feedback.ok { background: rgba(107,203,119,0.15); color: var(--green); }
+  .oef-feedback.nok { background: rgba(255,107,107,0.12); color: var(--red); }
+  .oef-feedback.vrij { background: rgba(78,205,196,0.12); color: var(--accent-b); }
+
+  .oef-juist-teken {
+    font-size: 1.4rem; float: right; margin-top: -0.2rem;
+  }
+
+  /* ── Voortgangsbalk ── */
+  .voortgang-sectie { display: flex; flex-direction: column; gap: 0.4rem; }
+  .voortgang-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); }
+  .voortgang-balk-bg {
+    height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden;
+  }
+  .voortgang-balk-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent-b), var(--accent-c));
+    border-radius: 99px; transition: width 0.6s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── Vrije oefening ── */
+  .vrij-uitleg { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 0.6rem; }
+  .vrij-textarea {
+    width: 100%; min-height: 80px; padding: 0.75rem; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    color: var(--text); font-family: var(--mono); font-size: 0.9rem;
+    resize: vertical; outline: none;
+  }
+  .vrij-textarea:focus { border-color: var(--accent-c); }
+
+  .laden { text-align: center; color: var(--text-dim); padding: 3rem 0; font-size: 0.95rem; }
+  .fout-melding { color: var(--red); font-size: 0.88rem; text-align: center; padding: 0.5rem; }
+
+  .wissel-groep-btn {
+    background: none; border: none; color: var(--text-dim); font-family: var(--body);
+    font-size: 0.8rem; cursor: pointer; text-decoration: underline; padding: 0;
+  }
+  .wissel-groep-btn:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ── CONFIGURATIE ──────────────────────────────────────── -->
+<script>
+// BELANGRIJK: plak hier de URL van jouw deployed Apps Script Web App
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzI2xZ1lsJmwcPpIq92fKdBkvaPQ5J62796V9kWua9F8X1gcmehC0vrRWzsnFCCZmvK/exec";
+</script>
+
+<!-- ── SCHERM 1: LOGIN ────────────────────────────────────── -->
+<div id="screen-login" class="screen active">
+  <div class="login-header">
+    <div class="logo-icon">🧮</div>
+    <h1>Vergelijkingen</h1>
+    <p>Geef je naam in om te starten</p>
+  </div>
+  <input type="text" id="input-naam" placeholder="Jouw naam" autocomplete="off" />
+  <button class="btn btn-primary" onclick="startLogin()">Verder →</button>
+  <p id="login-fout" class="fout-melding" style="display:none"></p>
+</div>
+
+<!-- ── SCHERM 2: GROEPSKEUZE ──────────────────────────────── -->
+<div id="screen-groep" class="screen">
+  <div>
+    <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:0.25rem;">Ingelogd als</p>
+    <p style="font-weight:700; font-size:1.1rem;" id="groep-naam-label"></p>
+  </div>
+
+  <div>
+    <p style="font-weight:700; margin-bottom:0.25rem;">Kies je groep</p>
+    <p style="font-size:0.85rem; color:var(--text-dim); line-height:1.5;">
+      Kies eerlijk. Groep A is voor wie het nog moeilijk vindt en uitleg wil.
+      Groep B is voor wie wil herhalen. Groep C is voor wie verder wil gaan.
+      De leerkracht kan je groep aanpassen als dat nodig is.
+    </p>
+  </div>
+
+  <div id="groep-override-melding" style="display:none" class="groep-override"></div>
+
+  <div class="groep-cards">
+    <div class="groep-card" id="card-a" onclick="kiesGroep('A')">
+      <div class="groep-letter groep-letter-a">A</div>
+      <div class="groep-info">
+        <h3>Ik heb het nog moeilijk</h3>
+        <p>Stappenplan erbij, rustig werken. De leerkracht helpt je.</p>
+      </div>
+    </div>
+    <div class="groep-card" id="card-b" onclick="kiesGroep('B')">
+      <div class="groep-letter groep-letter-b">B</div>
+      <div class="groep-info">
+        <h3>Ik wil herhalen</h3>
+        <p>Zelfstandig oefenen op de drie types vergelijkingen.</p>
+      </div>
+    </div>
+    <div class="groep-card" id="card-c" onclick="kiesGroep('C')">
+      <div class="groep-letter groep-letter-c">C</div>
+      <div class="groep-info">
+        <h3>Ik wil een uitdaging</h3>
+        <p>Moeilijkere vergelijkingen, breuken, haakjes, zelf opstellen.</p>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="btn-groep-bevestig" onclick="bevestigGroep()" style="display:none">
+    Start met groep <span id="groep-keuze-label">?</span> →
+  </button>
+</div>
+
+<!-- ── SCHERM 3: OEFENINGEN ───────────────────────────────── -->
+<div id="screen-oefeningen" class="screen">
+  <div class="oef-header">
+    <div>
+      <p class="oef-naam" id="oef-naam-label"></p>
+      <button class="wissel-groep-btn" onclick="wisselGroep()">groep wijzigen</button>
+    </div>
+    <div class="score-badge">⚡ <span id="score-punten">0</span> pt</div>
+  </div>
+
+  <div class="voortgang-sectie">
+    <div class="voortgang-label">
+      <span>Klassikale voortgang</span>
+      <span id="voortgang-pct">0%</span>
+    </div>
+    <div class="voortgang-balk-bg">
+      <div class="voortgang-balk-fill" id="voortgang-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="oefeningen-container" class="laden">Laden…</div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+let state = {
+  naam: "",
+  groep: null,
+  punten: 0,
+  gedaan: new Set(),
+  pogingen: {},      // oefId -> aantal foute pogingen
+};
+
+// ── Oefeningen per groep ──────────────────────────────────────
+const GROEP_DATA = {
+  A: {
+    secties: [
+      {
+        titel: "Type 1 — x + a = b",
+        oefeningen: [
+          { id: "A1", vgl: "x + 4 = 9",   punten: 1 },
+          { id: "A2", vgl: "x − 3 = 7",   punten: 1 },
+          { id: "A3", vgl: "x + 11 = 20", punten: 1 },
+        ]
+      },
+      {
+        titel: "Type 2 — ax = b",
+        oefeningen: [
+          { id: "A4", vgl: "3x = 60",     punten: 1 },
+          { id: "A5", vgl: "7x = 56",     punten: 1 },
+        ]
+      },
+      {
+        titel: "Type 3 — ax + b = cx + d",
+        oefeningen: [
+          { id: "A6", vgl: "4x + 2 = 2x + 10", punten: 1 },
+          { id: "A7", vgl: "5x + 3 = 3x + 11", punten: 2 },
+          { id: "A8", vgl: "6x − 2 = 4x + 10", punten: 2 },
+          { id: "A9", vgl: "3x + 9 = x + 15",  punten: 2 },
+        ]
+      }
+    ]
+  },
+  B: {
+    secties: [
+      {
+        titel: "Type 1 — x + a = b",
+        oefeningen: [
+          { id: "B1", vgl: "x + 7 = 19",  punten: 1 },
+          { id: "B2", vgl: "x − 5 = 3",   punten: 1 },
+          { id: "B3", vgl: "x + 9 = 26",  punten: 1 },
+        ]
+      },
+      {
+        titel: "Type 2 — ax = b",
+        oefeningen: [
+          { id: "B4", vgl: "4x = 36",     punten: 1 },
+          { id: "B5", vgl: "9x = 54",     punten: 1 },
+          { id: "B6", vgl: "8x = 56",     punten: 1 },
+        ]
+      },
+      {
+        titel: "Type 3 — ax + b = cx + d",
+        oefeningen: [
+          { id: "B7",  vgl: "5x + 2 = 3x + 12",  punten: 2 },
+          { id: "B8",  vgl: "4x − 1 = x + 11",   punten: 2 },
+          { id: "B9",  vgl: "7x + 4 = 4x + 19",  punten: 2 },
+          { id: "B10", vgl: "6x − 3 = 3x + 9",   punten: 2 },
+        ]
+      },
+      {
+        titel: "Breuken",
+        oefeningen: [
+          { id: "B11", vgl: "x/2 + 1 = 2,5",   punten: 2 },
+          { id: "B12", vgl: "x/3 + 2 = 10/3",  punten: 2 },
+        ]
+      }
+    ]
+  },
+  C: {
+    secties: [
+      {
+        titel: "Moeilijkere vergelijkingen",
+        oefeningen: [
+          { id: "C1", vgl: "8x − 11 = 5x + 4",   punten: 2 },
+          { id: "C2", vgl: "10x + 3 = 7x + 12",  punten: 2 },
+          { id: "C3", vgl: "9x − 5 = 3x + 31",   punten: 2 },
+          { id: "C4", vgl: "12x + 1 = 5x + 15",  punten: 2 },
+          { id: "C5", vgl: "11x − 8 = 7x + 8",   punten: 2 },
+        ]
+      },
+      {
+        titel: "Breuken",
+        oefeningen: [
+          { id: "C6", vgl: "x/2 + 3 = x/4 + 4",  punten: 2 },
+          { id: "C7", vgl: "2x/3 + 1 = x/3 + 2", punten: 2 },
+        ]
+      },
+      {
+        titel: "Haakjes — nieuw! Lees eerst het stappenplan",
+        oefeningen: [
+          { id: "C8", vgl: "2(x + 3) = 14",         punten: 3 },
+          { id: "C9", vgl: "3(x − 1) + 4 = 2x + 6", punten: 3 },
+        ],
+        stappenplan: "Stap 1: werk de haakjes uit (vermenigvuldig).  →  Stap 2: los op zoals gewoon."
+      },
+      {
+        titel: "Stel zelf een vergelijking op",
+        oefeningen: [
+          { id: "C10", vgl: "Schrijf zelf een vergelijking van type ax + b = cx + d en los ze op.", punten: 3, vrij: true },
+        ]
+      }
+    ]
+  }
+};
+
+// ── Navigatie ────────────────────────────────────────────────
+function toonScherm(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Login ────────────────────────────────────────────────────
+function startLogin() {
+  const naam = document.getElementById('input-naam').value.trim();
+  if (!naam) { toonFout('login-fout', 'Vul je naam in.'); return; }
+  state.naam = naam;
+  document.getElementById('groep-naam-label').textContent = naam;
+
+  // Laad bestaande score + eventuele groep-override
+  laadLeerlingData(naam);
+}
+
+document.getElementById('input-naam').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startLogin();
+});
+
+async function laadLeerlingData(naam) {
+  try {
+    const [scoreRes, groepRes] = await Promise.all([
+      fetch(`${SCRIPT_URL}?action=score&naam=${encodeURIComponent(naam)}`),
+      fetch(`${SCRIPT_URL}?action=groep&naam=${encodeURIComponent(naam)}`)
+    ]);
+    const scoreData = await scoreRes.json();
+    const groepData = await groepRes.json();
+
+    state.punten = scoreData.punten || 0;
+    state.gedaan = new Set(scoreData.gedaan || []);
+
+    if (groepData.groep) {
+      // Leerkracht heeft groep vastgelegd
+      const override = groepData.groep;
+      document.getElementById('groep-override-melding').style.display = 'block';
+      document.getElementById('groep-override-melding').textContent =
+        `De leerkracht heeft jou ingedeeld in groep ${override}.`;
+      // Toon enkel die kaart clickable
+      ['A','B','C'].forEach(g => {
+        const card = document.getElementById(`card-${g.toLowerCase()}`);
+        if (g !== override) { card.style.opacity = '0.35'; card.style.pointerEvents = 'none'; }
+      });
+      kiesGroep(override);
+    }
+
+    toonScherm('screen-groep');
+  } catch (e) {
+    toonFout('login-fout', 'Kan geen verbinding maken. Controleer de instellingen.');
+  }
+}
+
+// ── Groepskeuze ──────────────────────────────────────────────
+let geselecteerdeGroep = null;
+
+function kiesGroep(g) {
+  geselecteerdeGroep = g;
+  ['a','b','c'].forEach(x => document.getElementById(`card-${x}`).className = 'groep-card');
+  document.getElementById(`card-${g.toLowerCase()}`).classList.add(`selected-${g.toLowerCase()}`);
+  document.getElementById('groep-keuze-label').textContent = g;
+  document.getElementById('btn-groep-bevestig').style.display = 'block';
+}
+
+function bevestigGroep() {
+  if (!geselecteerdeGroep) return;
+  state.groep = geselecteerdeGroep;
+  document.getElementById('oef-naam-label').textContent = `${state.naam}  ·  Groep ${state.groep}`;
+  document.getElementById('score-punten').textContent = state.punten;
+  bouwOefeningen();
+  toonScherm('screen-oefeningen');
+  startVoortgangPolling();
+}
+
+function wisselGroep() {
+  toonScherm('screen-groep');
+}
+
+// ── Oefeningen bouwen ────────────────────────────────────────
+function bouwOefeningen() {
+  const container = document.getElementById('oefeningen-container');
+  container.innerHTML = '';
+  container.className = 'oef-secties';
+
+  const data = GROEP_DATA[state.groep];
+  data.secties.forEach(sectie => {
+    const sectieDiv = document.createElement('div');
+    sectieDiv.className = 'oef-sectie';
+
+    const titelDiv = document.createElement('div');
+    titelDiv.className = 'oef-sectie-titel';
+    titelDiv.textContent = sectie.titel;
+    sectieDiv.appendChild(titelDiv);
+
+    if (sectie.stappenplan) {
+      const sp = document.createElement('div');
+      sp.style.cssText = 'font-size:0.82rem;color:var(--accent-c);background:rgba(255,230,109,0.08);border-radius:8px;padding:0.6rem 0.9rem;margin-bottom:0.5rem;line-height:1.5;';
+      sp.textContent = '📋 ' + sectie.stappenplan;
+      sectieDiv.appendChild(sp);
+    }
+
+    sectie.oefeningen.forEach(oef => {
+      sectieDiv.appendChild(maakOefeningEl(oef));
+    });
+
+    container.appendChild(sectieDiv);
+  });
+}
+
+function maakOefeningEl(oef) {
+  const div = document.createElement('div');
+  div.className = 'oef-item';
+  div.id = `oef-${oef.id}`;
+
+  const isGedaan = state.gedaan.has(oef.id);
+
+  const puntenLabel = `${oef.punten} punt${oef.punten > 1 ? 'en' : ''}`;
+
+  if (oef.vrij) {
+    div.innerHTML = `
+      <div class="oef-vergelijking">${oef.vgl}</div>
+      <p class="vrij-uitleg">Schrijf je vergelijking en oplossing hieronder. Klik op "Indienen" als je klaar bent.</p>
+      <textarea class="vrij-textarea" id="vrij-${oef.id}" placeholder="Bv: 3x + 5 = x + 13  →  2x = 8  →  x = 4" ${isGedaan ? 'disabled' : ''}></textarea>
+      <div style="margin-top:0.5rem;">
+        <button class="btn btn-secondary" style="width:auto;padding:0.6rem 1rem;font-size:0.88rem;" onclick="dienVrijIn('${oef.id}', ${oef.punten})" ${isGedaan ? 'disabled' : ''}>Indienen ✓</button>
+      </div>
+      ${isGedaan ? '<div class="oef-feedback vrij">✓ Ingediend!</div>' : ''}
+    `;
+  } else {
+    div.innerHTML = `
+      <div class="oef-vergelijking">${isGedaan ? `<span class="oef-juist-teken">✓</span>` : ''}${oef.vgl}</div>
+      <p class="oef-punten-label">${puntenLabel}</p>
+      <div class="oef-invoer" ${isGedaan ? 'style="display:none"' : ''}>
+        <input type="number" step="any" id="inp-${oef.id}" placeholder="x = ?" onkeydown="if(event.key==='Enter') controleerOef('${oef.id}', ${oef.punten})" />
+        <button class="btn-check" onclick="controleerOef('${oef.id}', ${oef.punten})">✓</button>
+      </div>
+      <div class="oef-feedback" id="fb-${oef.id}" style="display:none"></div>
+    `;
+    if (isGedaan) div.classList.add('juist');
+  }
+
+  return div;
+}
+
+// ── Antwoord controleren ─────────────────────────────────────
+async function controleerOef(oefId, punten) {
+  const inp = document.getElementById(`inp-${oefId}`);
+  const antwoord = inp.value.trim();
+  if (!antwoord) return;
+
+  inp.disabled = true;
+  const fb = document.getElementById(`fb-${oefId}`);
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ naam: state.naam, groep: state.groep, oefening: oefId, antwoord })
+    });
+    const data = await res.json();
+
+    if (data.juist) {
+      state.punten += data.punten;
+      state.gedaan.add(oefId);
+      document.getElementById('score-punten').textContent = state.punten;
+      document.getElementById(`oef-${oefId}`).classList.add('juist');
+      document.querySelector(`#oef-${oefId} .oef-invoer`).style.display = 'none';
+      document.querySelector(`#oef-${oefId} .oef-vergelijking`).innerHTML =
+        `<span class="oef-juist-teken">✓</span>` + document.querySelector(`#oef-${oefId} .oef-vergelijking`).textContent;
+      fb.className = 'oef-feedback ok';
+      fb.textContent = `✓ Juist! +${data.punten} punt${data.punten > 1 ? 'en' : ''}`;
+      fb.style.display = 'block';
+      animeerPunten();
+    } else {
+      state.pogingen[oefId] = (state.pogingen[oefId] || 0) + 1;
+      document.getElementById(`oef-${oefId}`).classList.add('fout-poging');
+      fb.className = 'oef-feedback nok';
+      const pogingen = state.pogingen[oefId];
+      if (pogingen >= 2 && data.juistAntwoord !== null) {
+        fb.textContent = `✗ Nog niet juist. Het antwoord is x = ${data.juistAntwoord}.`;
+      } else {
+        fb.textContent = `✗ Nog niet juist. Probeer opnieuw.`;
+      }
+      fb.style.display = 'block';
+      inp.disabled = false;
+      inp.value = '';
+      inp.focus();
+      setTimeout(() => document.getElementById(`oef-${oefId}`).classList.remove('fout-poging'), 600);
+    }
+  } catch (e) {
+    fb.className = 'oef-feedback nok';
+    fb.textContent = 'Verbindingsfout. Probeer opnieuw.';
+    fb.style.display = 'block';
+    inp.disabled = false;
+  }
+}
+
+async function dienVrijIn(oefId, punten) {
+  const tekst = document.getElementById(`vrij-${oefId}`).value.trim();
+  if (!tekst) return;
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ naam: state.naam, groep: state.groep, oefening: oefId, antwoord: tekst })
+    });
+    state.punten += punten;
+    state.gedaan.add(oefId);
+    document.getElementById('score-punten').textContent = state.punten;
+    document.getElementById(`vrij-${oefId}`).disabled = true;
+    const oudeBtn = document.querySelector(`#oef-${oefId} button`);
+    if (oudeBtn) oudeBtn.disabled = true;
+    const fb = document.createElement('div');
+    fb.className = 'oef-feedback vrij';
+    fb.textContent = `✓ Ingediend! +${punten} punten`;
+    document.getElementById(`oef-${oefId}`).appendChild(fb);
+    animeerPunten();
+  } catch(e) {}
+}
+
+// ── Kleine punt-animatie ──────────────────────────────────────
+function animeerPunten() {
+  const badge = document.querySelector('.score-badge');
+  badge.style.transform = 'scale(1.25)';
+  badge.style.transition = 'transform 0.15s';
+  setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
+}
+
+// ── Klassikale voortgang pollen ───────────────────────────────
+let pollingInterval = null;
+function startVoortgangPolling() {
+  updateVoortgang();
+  pollingInterval = setInterval(updateVoortgang, 8000);
+}
+
+async function updateVoortgang() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=klassikaal`);
+    const data = await res.json();
+    const pct = data.voortgang || 0;
+    document.getElementById('voortgang-fill').style.width = pct + '%';
+    document.getElementById('voortgang-pct').textContent = pct + '%';
+  } catch(e) {}
+}
+
+function toonFout(elId, tekst) {
+  const el = document.getElementById(elId);
+  el.textContent = tekst;
+  el.style.display = 'block';
+}
+</script>
+</body>
+</html>

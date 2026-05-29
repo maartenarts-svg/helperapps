@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vergelijkingen — Klassikaal scherm</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b14;
+    --surface: #111420;
+    --surface2: #181c2e;
+    --border: #252a40;
+    --accent-a: #ff6b6b;
+    --accent-b: #4ecdc4;
+    --accent-c: #ffe66d;
+    --text: #e8eaf0;
+    --text-dim: #5a6080;
+    --mono: 'Space Mono', monospace;
+    --body: 'Nunito', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--body); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: 80px 1fr;
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* ── Header ── */
+  .header {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .header-title { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; }
+  .header-title span { color: var(--accent-b); }
+  .header-meta { font-size: 0.8rem; color: var(--text-dim); font-family: var(--mono); }
+
+  /* ── Foto-paneel ── */
+  .foto-paneel {
+    padding: 2rem;
+    display: flex; flex-direction: column; gap: 1.5rem;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .voortgang-container { display: flex; flex-direction: column; gap: 0.6rem; }
+  .voortgang-meta { display: flex; justify-content: space-between; align-items: baseline; }
+  .voortgang-titel { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); }
+  .voortgang-getal { font-family: var(--mono); font-size: 1.4rem; font-weight: 700; }
+  .voortgang-getal span { color: var(--accent-c); }
+  .balk-bg { height: 12px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .balk-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-b) 0%, var(--accent-c) 100%);
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 16px rgba(78,205,196,0.4);
+  }
+
+  .foto-wrapper {
+    flex: 1; position: relative; border-radius: 16px; overflow: hidden;
+    background: var(--surface2); border: 1px solid var(--border);
+    min-height: 0;
+  }
+  .foto-img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .foto-overlay {
+    position: absolute; inset: 0;
+    background: var(--bg);
+    transition: opacity 1.5s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .foto-overlay-tekst {
+    font-size: 1rem; color: var(--text-dim); text-align: center; line-height: 1.6;
+  }
+  .foto-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+  }
+  .foto-placeholder-icon { font-size: 4rem; opacity: 0.3; }
+  .foto-placeholder-tekst { font-size: 0.85rem; color: var(--text-dim); text-align: center; }
+
+  .onthulling-label {
+    text-align: center; font-size: 0.82rem; color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  /* ── Scorebord ── */
+  .scorebord {
+    padding: 1.5rem 1rem;
+    display: flex; flex-direction: column; gap: 1rem;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .scorebord::-webkit-scrollbar { display: none; }
+
+  .scorebord-titel {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-dim);
+    padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+  }
+
+  .leerling-rij {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0.75rem; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    transition: border-color 0.3s, transform 0.3s;
+    animation: binnenGlij 0.4s ease both;
+  }
+  @keyframes binnenGlij {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .leerling-rij.nieuw-punt { border-color: var(--accent-b); }
+
+  .groep-pil {
+    font-family: var(--mono); font-size: 0.7rem; font-weight: 700;
+    padding: 0.15rem 0.45rem; border-radius: 4px; flex-shrink: 0;
+  }
+  .pil-a { background: rgba(255,107,107,0.15); color: var(--accent-a); }
+  .pil-b { background: rgba(78,205,196,0.15); color: var(--accent-b); }
+  .pil-c { background: rgba(255,230,109,0.15); color: var(--accent-c); }
+
+  .leerling-naam { flex: 1; font-size: 0.88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .leerling-punten { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; color: var(--accent-b); flex-shrink: 0; }
+
+  .geen-data { color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 2rem 0; }
+
+  /* ── Feest-overlay bij 100% ── */
+  .feest-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(8,11,20,0.85);
+    flex-direction: column; gap: 1.5rem;
+  }
+  .feest-overlay.zichtbaar { display: flex; }
+  .feest-tekst { font-size: 3rem; font-weight: 900; text-align: center; line-height: 1.1; }
+  .feest-sub { color: var(--text-dim); font-size: 1rem; }
+  .feest-sluit { background: var(--accent-b); color: #080b14; border: none; border-radius: 10px; padding: 0.7rem 1.5rem; font-family: var(--body); font-weight: 700; font-size: 1rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzI2xZ1lsJmwcPpIq92fKdBkvaPQ5J62796V9kWua9F8X1gcmehC0vrRWzsnFCCZmvK/exec"; // zelfde URL als in leerling.html
+const VERVERSEN_INTERVAL = 5000; // ms
+</script>
+
+<div class="layout">
+  <header class="header">
+    <div class="header-title">🧮 Vergelijkingen — <span>Klassikaal scherm</span></div>
+    <div class="header-meta" id="header-meta">Laden…</div>
+  </header>
+
+  <!-- Foto-paneel -->
+  <main class="foto-paneel">
+    <div class="voortgang-container">
+      <div class="voortgang-meta">
+        <span class="voortgang-titel">Klassikale voortgang</span>
+        <span class="voortgang-getal"><span id="pct-getal">0</span>%</span>
+      </div>
+      <div class="balk-bg">
+        <div class="balk-fill" id="balk-fill" style="width:0%"></div>
+      </div>
+      <div class="onthulling-label" id="onthulling-label">Verdien punten om de foto te onthullen!</div>
+    </div>
+
+    <div class="foto-wrapper">
+      <img class="foto-img" id="foto-img" src="" alt="Geheime foto" style="display:none" />
+      <div class="foto-placeholder" id="foto-placeholder">
+        <div class="foto-placeholder-icon">🔒</div>
+        <div class="foto-placeholder-tekst">De foto onthult zich naarmate<br>de klas punten verdient.</div>
+      </div>
+      <div class="foto-overlay" id="foto-overlay" style="opacity:1">
+      </div>
+    </div>
+  </main>
+
+  <!-- Scorebord -->
+  <aside class="scorebord">
+    <div class="scorebord-titel">Leerlingen</div>
+    <div id="scorebord-lijst"><div class="geen-data">Nog geen leerlingen actief.</div></div>
+  </aside>
+</div>
+
+<!-- Feest-overlay -->
+<div class="feest-overlay" id="feest-overlay">
+  <div class="feest-tekst">🎉 Foto onthult!</div>
+  <div class="feest-sub">De klas heeft het doel bereikt!</div>
+  <button class="feest-sluit" onclick="document.getElementById('feest-overlay').classList.remove('zichtbaar')">Sluiten</button>
+</div>
+
+<script>
+let vorigeData = null;
+let feestGetoond = false;
+
+async function update() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=klassikaal`);
+    const data = await res.json();
+
+    const pct = data.voortgang || 0;
+    const totaal = data.totaalPunten || 0;
+    const doel = data.doel || 60;
+    const leerlingen = data.leerlingen || [];
+
+    // Header
+    document.getElementById('header-meta').textContent =
+      `${leerlingen.length} leerlingen  ·  ${totaal} / ${doel} punten`;
+
+    // Voortgangsbalk
+    document.getElementById('pct-getal').textContent = pct;
+    document.getElementById('balk-fill').style.width = pct + '%';
+
+    const tegels = Math.floor(pct / 10);
+    document.getElementById('onthulling-label').textContent =
+      pct >= 100
+        ? '🎉 Volledig onthult!'
+        : `Nog ${doel - totaal} punten voor volledige onthulling`;
+
+    // Foto onthullen
+    if (data.fotoUrl) {
+      const img = document.getElementById('foto-img');
+      if (!img.src.includes(data.fotoUrl)) {
+        img.src = data.fotoUrl;
+        img.style.display = 'block';
+        document.getElementById('foto-placeholder').style.display = 'none';
+      }
+      // Overlay transparantie = hoe meer punten, hoe meer zichtbaar
+      const zichtbaar = Math.min(pct / 100, 1);
+      document.getElementById('foto-overlay').style.opacity = (1 - zichtbaar).toFixed(2);
+    } else {
+      // Geen foto: gebruik placeholder met progressieve reveal-tekst
+      const overlay = document.getElementById('foto-overlay');
+      if (pct > 0) {
+        const zichtbaar = Math.min(pct / 100, 1);
+        overlay.style.opacity = Math.max(0, 1 - zichtbaar * 1.2).toFixed(2);
+        document.getElementById('foto-placeholder').style.display = 'flex';
+        document.getElementById('foto-img').style.display = 'none';
+      }
+    }
+
+    // Feest bij 100%
+    if (pct >= 100 && !feestGetoond) {
+      feestGetoond = true;
+      document.getElementById('feest-overlay').classList.add('zichtbaar');
+    }
+
+    // Scorebord
+    const gesorteerd = [...leerlingen].sort((a, b) => b.punten - a.punten);
+    const lijst = document.getElementById('scorebord-lijst');
+
+    if (gesorteerd.length === 0) {
+      lijst.innerHTML = '<div class="geen-data">Nog geen leerlingen actief.</div>';
+    } else {
+      lijst.innerHTML = '';
+      gesorteerd.forEach((l, i) => {
+        const div = document.createElement('div');
+        div.className = 'leerling-rij';
+
+        // Markeer als nieuw punt tov vorige update
+        if (vorigeData) {
+          const vorigePunten = (vorigeData.leerlingen || []).find(x => x.naam === l.naam)?.punten ?? 0;
+          if (l.punten > vorigePunten) {
+            div.classList.add('nieuw-punt');
+            setTimeout(() => div.classList.remove('nieuw-punt'), 2000);
+          }
+        }
+
+        const groepKlasse = `pil-${(l.groep || 'b').toLowerCase()}`;
+        div.innerHTML = `
+          <span class="groep-pil ${groepKlasse}">${l.groep || '?'}</span>
+          <span class="leerling-naam">${l.naam}</span>
+          <span class="leerling-punten">${l.punten} pt</span>
+        `;
+        lijst.appendChild(div);
+      });
+    }
+
+    vorigeData = data;
+  } catch(e) {
+    document.getElementById('header-meta').textContent = 'Verbindingsfout…';
+  }
+}
+
+update();
+setInterval(update, VERVERSEN_INTERVAL);
+</script>
+</body>
+</html>

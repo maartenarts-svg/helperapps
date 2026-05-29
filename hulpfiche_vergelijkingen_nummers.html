@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hulpfiche — Vergelijkingen oplossen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blauw: #2563eb;
+      --blauw-licht: #eff6ff;
+      --blauw-rand: #bfdbfe;
+      --geel: #d97706;
+      --geel-licht: #fffbeb;
+      --geel-rand: #fcd34d;
+      --groen: #16a34a;
+      --groen-licht: #f0fdf4;
+      --groen-rand: #86efac;
+      --paars: #7c3aed;
+      --paars-licht: #f5f3ff;
+      --paars-rand: #c4b5fd;
+      --rood: #dc2626;
+      --rood-licht: #fef2f2;
+      --rood-rand: #fca5a5;
+      --tekst: #1e293b;
+      --muted: #64748b;
+      --bg: #f1f5f9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--tekst);
+      padding: 24px 16px 48px;
+    }
+
+    .pagina { max-width: 820px; margin: 0 auto; }
+
+    .header {
+      background: var(--blauw);
+      color: white;
+      border-radius: 16px;
+      padding: 24px 32px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-icoon { font-size: 2.4rem; }
+    .header-titel { font-size: 1.4rem; font-weight: 900; }
+
+    .sectie {
+      background: white;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+
+    .sectie-header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1.5px solid #e2e8f0;
+    }
+    .sectie-header.blauw  { background: var(--blauw-licht);  border-color: var(--blauw-rand);  }
+    .sectie-header.geel   { background: var(--geel-licht);   border-color: var(--geel-rand);   }
+    .sectie-header.groen  { background: var(--groen-licht);  border-color: var(--groen-rand);  }
+    .sectie-header.paars  { background: var(--paars-licht);  border-color: var(--paars-rand);  }
+    .sectie-header.rood   { background: var(--rood-licht);   border-color: var(--rood-rand);   }
+
+    .sectie-badge {
+      font-size: .7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .sectie-badge.blauw  { background: var(--blauw);  color: white; }
+    .sectie-badge.geel   { background: var(--geel);   color: white; }
+    .sectie-badge.groen  { background: var(--groen);  color: white; }
+    .sectie-badge.paars  { background: var(--paars);  color: white; }
+    .sectie-badge.rood   { background: var(--rood);   color: white; }
+
+    .sectie-naam { font-size: 1rem; font-weight: 900; color: var(--tekst); }
+    .sectie-inhoud { padding: 18px 22px; }
+
+    .voorbeeld-blok {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .95rem;
+      font-weight: 700;
+    }
+    .vb-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: .68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .valkuil-blok {
+      background: var(--geel-licht);
+      border: 1.5px solid var(--geel-rand);
+      border-radius: 10px;
+      padding: 8px 14px;
+      margin-top: 10px;
+      font-size: .82rem;
+      font-weight: 700;
+      color: #92400e;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .valkuil-icoon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    .stappen { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .stap {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: .9rem;
+      font-weight: 700;
+      line-height: 1.5;
+      color: var(--tekst);
+    }
+    .stap-nr {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .82rem;
+      font-weight: 900;
+      margin-top: 1px;
+    }
+    .stap-nr.blauw { background: var(--blauw);  color: white; }
+    .stap-nr.geel  { background: var(--geel);   color: white; }
+    .stap-nr.groen { background: var(--groen);  color: white; }
+    .stap-nr.paars { background: var(--paars);  color: white; }
+    .stap-nr.rood  { background: var(--rood);   color: white; }
+
+    .stap-tekst em {
+      font-style: italic;
+    }
+
+    .vraag {
+      font-style: italic;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .balans-box {
+      background: var(--blauw-licht);
+      border: 1.5px solid var(--blauw-rand);
+      border-radius: 10px;
+      padding: 8px 14px;
+      margin-bottom: 14px;
+      font-size: .84rem;
+      font-weight: 800;
+      color: var(--blauw);
+      text-align: center;
+    }
+
+    .twee-kolommen {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .twee-kolommen .sectie { margin-bottom: 0; }
+
+    /* Uitgewerkt voorbeeld — tabel-layout voor uitlijning */
+    .uitgewerkt {
+      background: white;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+    .uitgewerkt-header {
+      background: var(--tekst);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .uitgewerkt-badge {
+      font-size: .7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: white;
+      color: var(--tekst);
+      white-space: nowrap;
+    }
+    .uitgewerkt-naam {
+      font-size: 1rem;
+      font-weight: 900;
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .uitgewerkt-inhoud {
+      padding: 16px 22px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 32px;
+    }
+    /* Tabel-aanpak voor nette uitlijning */
+    .uw-tabel {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .88rem;
+      font-weight: 700;
+    }
+    .uw-tabel td {
+      padding: 5px 8px 5px 0;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: baseline;
+    }
+    .uw-tabel td.label {
+      font-family: 'Nunito', sans-serif;
+      font-size: .68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      white-space: nowrap;
+      padding-right: 14px;
+      width: 1%;
+    }
+    .uw-check { color: var(--groen); }
+
+    .footer {
+      text-align: center;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      @page { margin: 12mm 14mm; size: A4; }
+      body { background: white; padding: 0; margin: 0; }
+      .pagina { max-width: 100%; }
+      .header { border-radius: 8px; }
+      .sectie, .uitgewerkt { break-inside: avoid; box-shadow: none; }
+      .twee-kolommen { break-inside: avoid; }
+      .footer { margin-top: 16px; }
+    }
+
+    @media (max-width: 600px) {
+      .twee-kolommen { grid-template-columns: 1fr; }
+      .uitgewerkt-inhoud { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="pagina">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icoon">⚖️</div>
+    <div>
+      <div class="header-titel">Hulpfiche — Vergelijkingen oplossen</div>
+    </div>
+  </div>
+
+  <!-- Inleiding -->
+  <div class="sectie">
+    <div class="sectie-header blauw">
+      <span class="sectie-badge blauw">Eerst</span>
+      <span class="sectie-naam">Wat is een vergelijking?</span>
+    </div>
+    <div class="sectie-inhoud">
+      <ul class="stappen">
+        <li class="stap">
+          <span class="stap-nr blauw">1</span>
+          <span class="stap-tekst"><span class="vraag">Waarom is dit een vergelijking?</span><br>
+          Omdat er een <strong>gelijkheidsteken</strong> in staat én een <strong>onbekende</strong> (een letter).</span>
+        </li>
+        <li class="stap">
+          <span class="stap-nr blauw">2</span>
+          <span class="stap-tekst"><span class="vraag">Wat is de onbekende?</span><br>
+          De letter in de vergelijking: <em>x</em>, <em>y</em>, <em>t</em>, <em>r</em>, <em>n</em>, …</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Stap 1 + Stap 2 naast elkaar -->
+  <div class="twee-kolommen">
+
+    <div class="sectie">
+      <div class="sectie-header geel">
+        <span class="sectie-badge geel">Stap 1</span>
+        <span class="sectie-naam">Termen wegwerken</span>
+      </div>
+      <div class="sectie-inhoud">
+        <div class="balans-box">⚖️&nbsp; Wat je bij het ene lid doet, doe je ook bij het andere.</div>
+        <ul class="stappen">
+          <li class="stap">
+            <span class="stap-nr geel">1</span>
+            <span class="stap-tekst"><span class="vraag">Staan de termen met de onbekende al in één lid en de termen zonder de onbekende in het andere lid?</span><br>
+            Ja → ga naar stap 3. &nbsp; Nee → verder.</span>
+          </li>
+          <li class="stap">
+            <span class="stap-nr geel">2</span>
+            <span class="stap-tekst"><span class="vraag">In welk lid wil je de onbekende houden?</span><br>
+            Kies linkerlid of rechterlid.</span>
+          </li>
+          <li class="stap">
+            <span class="stap-nr geel">3</span>
+            <span class="stap-tekst">Welke termen moeten weg uit elk lid? Markeer die termen — vergeet het teken niet!</span>
+          </li>
+          <li class="stap">
+            <span class="stap-nr geel">4</span>
+            <span class="stap-tekst">Optellen of aftrekken — bij beide leden.</span>
+          </li>
+          <li class="stap">
+            <span class="stap-nr geel">5</span>
+            <span class="stap-tekst"><span class="vraag">Staan alle termen met de onbekende nu in één lid en alle termen zonder de onbekende in het andere lid?</span></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sectie">
+      <div class="sectie-header groen">
+        <span class="sectie-badge groen">Stap 2</span>
+        <span class="sectie-naam">Herleid beide leden</span>
+      </div>
+      <div class="sectie-inhoud">
+        <ul class="stappen">
+          <li class="stap">
+            <span class="stap-nr groen">1</span>
+            <span class="stap-tekst">Herleiden = <strong>korter schrijven</strong>.<br>
+            Tel de gelijksoortige termen samen.</span>
+          </li>
+        </ul>
+        <div class="valkuil-blok">
+          <span class="valkuil-icoon">⚠️</span>
+          <span>Onzichtbare 1: <em>6x − x = 5x</em>, niet <em>6x</em>. De coëfficiënt 1 is er wel!<br>
+          Negatieve getallen? Gebruik de pijlenvoorstelling.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Stap 3 + Stap 4 naast elkaar -->
+  <div class="twee-kolommen">
+
+    <div class="sectie">
+      <div class="sectie-header paars">
+        <span class="sectie-badge paars">Stap 3</span>
+        <span class="sectie-naam">Factor wegwerken</span>
+      </div>
+      <div class="sectie-inhoud">
+        <div class="balans-box">⚖️&nbsp; Wat je bij het ene lid doet, doe je ook bij het andere.</div>
+        <ul class="stappen">
+          <li class="stap">
+            <span class="stap-nr paars">1</span>
+            <span class="stap-tekst"><span class="vraag">Is er een factor voor de onbekende die we weg moeten werken?</span><br>
+            Factor = 1 → je ziet hem niet, maar hij is er. Geen bewerking nodig.</span>
+          </li>
+          <li class="stap">
+            <span class="stap-nr paars">2</span>
+            <span class="stap-tekst"><span class="vraag">Wat is de factor?</span><br>
+            Markeer hem in de vergelijking.</span>
+          </li>
+          <li class="stap">
+            <span class="stap-nr paars">3</span>
+            <span class="stap-tekst">Delen — bij beide leden.</span>
+          </li>
+        </ul>
+        <div class="valkuil-blok">
+          <span class="valkuil-icoon">⚠️</span>
+          <span>Negatieve factor: <em>−2y ÷ 2 ≠ y</em>. Je deelt door <em>−2</em>!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sectie">
+      <div class="sectie-header rood">
+        <span class="sectie-badge rood">Stap 4</span>
+        <span class="sectie-naam">Herleid beide leden</span>
+      </div>
+      <div class="sectie-inhoud">
+        <ul class="stappen">
+          <li class="stap">
+            <span class="stap-nr rood">1</span>
+            <span class="stap-tekst">Bereken de uitkomst van de deling.<br>
+            Je hebt nu de <strong>oplossing</strong>.</span>
+          </li>
+        </ul>
+        <div class="valkuil-blok">
+          <span class="valkuil-icoon">⚠️</span>
+          <span>Tekenregel bij delen:<br>
+          Even aantal mintekens → <strong>positief</strong><br>
+          Oneven aantal mintekens → <strong>negatief</strong></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Stap 5 breed -->
+  <div class="sectie">
+    <div class="sectie-header blauw">
+      <span class="sectie-badge blauw">Stap 5</span>
+      <span class="sectie-naam">Controleer de oplossing</span>
+    </div>
+    <div class="sectie-inhoud">
+      <ul class="stappen">
+        <li class="stap">
+          <span class="stap-nr blauw">1</span>
+          <span class="stap-tekst">Een getal is een oplossing als je, na het invullen, een <strong>gelijkheid</strong> krijgt.</span>
+        </li>
+        <li class="stap">
+          <span class="stap-nr blauw">2</span>
+          <span class="stap-tekst">Werk de twee leden <strong>gescheiden</strong> uit — dat is het overzichtelijkst.<br>
+          <span class="vraag">Bereken de getalwaarde van het linkerlid (<em>LL</em>).</span><br>
+          <span class="vraag">Bereken de getalwaarde van het rechterlid (<em>RL</em>).</span></span>
+        </li>
+        <li class="stap">
+          <span class="stap-nr blauw">3</span>
+          <span class="stap-tekst"><span class="vraag">Zijn <em>LL</em> en <em>RL</em> gelijk?</span> Dan klopt je oplossing! ✓</span>
+        </li>
+      </ul>
+      <div class="valkuil-blok">
+        <span class="valkuil-icoon">⚠️</span>
+        <span>Werk stap voor stap: eerst de vermenigvuldiging, dan pas optellen of aftrekken.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uitgewerkt voorbeeld -->
+  <div class="uitgewerkt">
+    <div class="uitgewerkt-header">
+      <span class="uitgewerkt-badge">Voorbeeld</span>
+      <span class="uitgewerkt-naam">6<em style="font-style:italic;color:#fcd34d">y</em> − 3 = 4<em style="font-style:italic;color:#fcd34d">y</em> + 7</span>
+    </div>
+    <div class="uitgewerkt-inhoud">
+      <div>
+        <table class="uw-tabel">
+          <tr><td class="label">Stap 1</td><td>6<em>y</em> − 4<em>y</em> = 7 + 3</td></tr>
+          <tr><td class="label">Stap 2</td><td>2<em>y</em> = 10</td></tr>
+          <tr><td class="label">Stap 3</td><td><em>y</em> = 10 : 2</td></tr>
+          <tr><td class="label">Stap 4</td><td><em>y</em> = 5</td></tr>
+        </table>
+      </div>
+      <div>
+        <table class="uw-tabel">
+          <tr><td class="label">Controle</td><td>LL: 6·5 − 3 = 27</td></tr>
+          <tr><td class="label"></td><td>RL: 4·5 + 7 = 27</td></tr>
+          <tr><td class="label"></td><td>LL = RL = 27 &nbsp;<span class="uw-check">✓</span></td></tr>
+          <tr><td class="label"></td><td><em>y</em> = 5 is de oplossing</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Hulpfiche &nbsp;·&nbsp; Vergelijkingen oplossen &nbsp;·&nbsp; Gebruik als geheugensteun</div>
+
+</div>
+</body>
+</html>
