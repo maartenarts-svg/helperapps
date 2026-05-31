@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hulpfiche — Machten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blauw: #2563eb;
+      --blauw-licht: #eff6ff;
+      --blauw-rand: #bfdbfe;
+      --geel: #d97706;
+      --geel-licht: #fffbeb;
+      --geel-rand: #fcd34d;
+      --groen: #16a34a;
+      --groen-licht: #f0fdf4;
+      --groen-rand: #86efac;
+      --paars: #7c3aed;
+      --paars-licht: #f5f3ff;
+      --paars-rand: #c4b5fd;
+      --rood: #dc2626;
+      --rood-licht: #fef2f2;
+      --rood-rand: #fca5a5;
+      --tekst: #1e293b;
+      --muted: #64748b;
+      --bg: #f1f5f9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--tekst);
+      padding: 24px 16px 48px;
+    }
+
+    .pagina { max-width: 820px; margin: 0 auto; }
+
+    .header {
+      background: var(--blauw);
+      color: white;
+      border-radius: 16px;
+      padding: 24px 32px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-icoon { font-size: 2.4rem; }
+    .header-titel { font-size: 1.4rem; font-weight: 900; }
+
+    .sectie {
+      background: white;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+
+    .sectie-header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1.5px solid #e2e8f0;
+    }
+    .sectie-header.blauw  { background: var(--blauw-licht);  border-color: var(--blauw-rand);  }
+    .sectie-header.geel   { background: var(--geel-licht);   border-color: var(--geel-rand);   }
+    .sectie-header.groen  { background: var(--groen-licht);  border-color: var(--groen-rand);  }
+    .sectie-header.paars  { background: var(--paars-licht);  border-color: var(--paars-rand);  }
+    .sectie-header.rood   { background: var(--rood-licht);   border-color: var(--rood-rand);   }
+
+    .sectie-badge {
+      font-size: .7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .sectie-badge.blauw  { background: var(--blauw);  color: white; }
+    .sectie-badge.geel   { background: var(--geel);   color: white; }
+    .sectie-badge.groen  { background: var(--groen);  color: white; }
+    .sectie-badge.paars  { background: var(--paars);  color: white; }
+    .sectie-badge.rood   { background: var(--rood);   color: white; }
+
+    .sectie-naam { font-size: 1rem; font-weight: 900; color: var(--tekst); }
+    .sectie-inhoud { padding: 18px 22px; }
+
+    .twee-kolommen {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .twee-kolommen .sectie { margin-bottom: 0; }
+
+    /* Definitie-blok: grondtal / exponent visueel */
+    .definitie-visueel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 16px 0 18px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .def-getal {
+      font-size: 3.2rem;
+      font-weight: 900;
+      color: var(--tekst);
+      line-height: 1;
+    }
+    .def-exp {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--paars);
+      line-height: 1;
+      margin-bottom: 20px;
+      margin-left: 3px;
+    }
+    .def-pijlen {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin-bottom: 14px;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+    .def-pijl-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .def-pijl-lijn {
+      width: 2px;
+      height: 18px;
+      border-radius: 2px;
+    }
+    .def-pijl-lijn.grondtal { background: var(--blauw); }
+    .def-pijl-lijn.exponent { background: var(--paars); }
+    .def-chip {
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: .72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .def-chip.grondtal { background: var(--blauw-licht); color: var(--blauw); border: 1.5px solid var(--blauw-rand); }
+    .def-chip.exponent { background: var(--paars-licht); color: var(--paars); border: 1.5px solid var(--paars-rand); }
+    .def-chip.macht    { background: var(--groen-licht); color: var(--groen); border: 1.5px solid var(--groen-rand); }
+
+    .def-uitleg {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: .85rem;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+    .def-uitleg table { width: 100%; border-collapse: collapse; }
+    .def-uitleg td { padding: 3px 8px 3px 0; vertical-align: top; }
+    .def-uitleg td:first-child {
+      white-space: nowrap;
+      font-weight: 900;
+      padding-right: 12px;
+    }
+
+    /* Voorbeeld-blok */
+    .voorbeeld-blok {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .95rem;
+      font-weight: 700;
+    }
+    .vb-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: .68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* Valkuil */
+    .valkuil-blok {
+      background: var(--geel-licht);
+      border: 1.5px solid var(--geel-rand);
+      border-radius: 10px;
+      padding: 8px 14px;
+      margin-top: 10px;
+      font-size: .82rem;
+      font-weight: 700;
+      color: #92400e;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .valkuil-icoon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* Stappen */
+    .stappen { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .stap {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: .9rem;
+      font-weight: 700;
+      line-height: 1.5;
+      color: var(--tekst);
+    }
+    .stap-nr {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .82rem;
+      font-weight: 900;
+      margin-top: 1px;
+    }
+    .stap-nr.blauw { background: var(--blauw); color: white; }
+    .stap-nr.geel  { background: var(--geel);  color: white; }
+    .stap-nr.groen { background: var(--groen); color: white; }
+    .stap-nr.paars { background: var(--paars); color: white; }
+    .stap-nr.rood  { background: var(--rood);  color: white; }
+
+    /* Tekenregel box */
+    .tekenregel-box {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+    }
+    .tk-label {
+      font-size: .68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .tk-rijen { display: flex; flex-direction: column; gap: 4px; }
+    .tk-rij {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .85rem;
+      font-weight: 700;
+    }
+    .tk-chip {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: .82rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .tk-chip.pos { background: var(--groen-licht); color: var(--groen); border: 1px solid var(--groen-rand); }
+    .tk-chip.neg { background: var(--rood-licht);  color: var(--rood);  border: 1px solid var(--rood-rand);  }
+    .tk-pijl { color: var(--muted); }
+
+    /* Kwadraten-tabel */
+    .kwadraten-tabel {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .kwadraten-tabel th {
+      background: var(--blauw);
+      color: white;
+      padding: 6px 4px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      font-weight: 900;
+      font-style: normal;
+      letter-spacing: .5px;
+    }
+    .kwadraten-tabel th:first-child {
+      font-style: italic;
+    }
+    .kwadraten-tabel th:first-child { border-radius: 6px 0 0 0; }
+    .kwadraten-tabel th:last-child  { border-radius: 0 6px 0 0; }
+    .kwadraten-tabel td {
+      text-align: center;
+      padding: 5px 4px;
+      border: 1px solid #e2e8f0;
+    }
+    .kwadraten-tabel tr:nth-child(even) td { background: #f8fafc; }
+    .kwadraten-tabel tr:last-child td:first-child { border-radius: 0 0 0 6px; }
+    .kwadraten-tabel tr:last-child td:last-child  { border-radius: 0 0 6px 0; }
+    .kwadraten-tabel .getal-rij td { color: var(--tekst); font-weight: 700; }
+    .kwadraten-tabel .kwadraat-rij td {
+      color: var(--blauw);
+      font-weight: 900;
+      background: var(--blauw-licht) !important;
+    }
+
+    /* Haakjes-tabel */
+    .haakjes-tabel {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .85rem;
+      font-weight: 700;
+    }
+    .haakjes-tabel td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .haakjes-tabel tr:last-child td { border-bottom: none; }
+    .haakjes-tabel td.notatie {
+      width: 46%;
+      color: var(--tekst);
+    }
+    .haakjes-tabel td.betekenis {
+      width: 54%;
+      font-family: 'Nunito', sans-serif;
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .haakjes-tabel tr.rij-a td { background: #fff; }
+    .haakjes-tabel tr.rij-b td { background: #f8fafc; }
+    .haakjes-tabel tr.rij-c td { background: #fff; }
+    .haakjes-tabel tr.rij-d td { background: #f8fafc; }
+    .chip-pos { color: var(--groen); font-weight: 900; }
+    .chip-neg { color: var(--rood);  font-weight: 900; }
+
+    /* Breuk inline */
+    .breuk {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .85rem;
+      font-weight: 700;
+      margin: 0 2px;
+      line-height: 1.1;
+    }
+    .breuk .bt, .breuk .bn { padding: 0 2px; }
+    .breuk .bs { width: 100%; min-width: 14px; height: 1.5px; background: currentColor; margin: 2px 0; }
+
+    /* ── Haakjes en exponent bij breukmachten: pas deze variabelen aan ── */
+    :root {
+      --haak-schaal-x: 1.3;    /* horizontaal uitrekken: 1 = normaal, 0.7 = smaller */
+      --haak-schaal-y: 2.5;    /* verticaal uitrekken:   1 = normaal, 2 = dubbel zo hoog */
+      --haak-verschuif: 0.5px; /* verticaal verschuiven: positief = naar onder, negatief = naar boven */
+      --exp-verschuif: -0.9em;
+      --exp-grootte: .75rem;
+    }
+
+    /* Breuk met grote haakjes + exponent rechtsboven */
+    .breuk-macht {
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+    }
+    .breuk-macht .haak {
+      display: inline-block;
+      font-weight: 400;
+      transform: scaleX(var(--haak-schaal-x)) scaleY(var(--haak-schaal-y));
+      transform-origin: center center;
+      position: relative;
+      top: var(--haak-verschuif);
+      margin: 0 1px;
+      line-height: 1;
+    }
+    .breuk-macht .exp {
+      font-size: var(--exp-grootte);
+      font-weight: 900;
+      line-height: 0;
+      margin-left: 1px;
+      position: relative;
+      top: var(--exp-verschuif);
+    }
+
+    /* Uitgewerkt voorbeeld */
+    .uitgewerkt {
+      background: white;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+    .uitgewerkt-header {
+      background: var(--tekst);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .uitgewerkt-badge {
+      font-size: .7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: white;
+      color: var(--tekst);
+      white-space: nowrap;
+    }
+    .uitgewerkt-naam {
+      font-size: 1rem;
+      font-weight: 900;
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .uitgewerkt-inhoud {
+      padding: 16px 22px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0 24px;
+    }
+    .uw-tabel {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .85rem;
+      font-weight: 700;
+    }
+    .uw-tabel td {
+      padding: 5px 8px 5px 0;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: baseline;
+    }
+    .uw-tabel td.label {
+      font-family: 'Nunito', sans-serif;
+      font-size: .68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      white-space: nowrap;
+      padding-right: 12px;
+      width: 1%;
+    }
+    .uw-check { color: var(--groen); }
+    .uw-kruis { color: var(--rood); }
+
+    .footer {
+      text-align: center;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      @page { margin: 12mm 14mm; size: A4; }
+      body { background: white; padding: 0; margin: 0; }
+      .pagina { max-width: 100%; }
+      .header { border-radius: 8px; }
+      .sectie, .uitgewerkt { break-inside: avoid; box-shadow: none; }
+      .twee-kolommen { break-inside: avoid; }
+      .footer { margin-top: 16px; }
+    }
+
+    @media (max-width: 600px) {
+      .twee-kolommen { grid-template-columns: 1fr; }
+      .uitgewerkt-inhoud { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="pagina">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icoon">🔢</div>
+    <div>
+      <div class="header-titel">Hulpfiche — Machten</div>
+    </div>
+  </div>
+
+  <!-- Definitie + Begrippen naast elkaar -->
+  <div class="twee-kolommen">
+
+    <div class="sectie">
+      <div class="sectie-header blauw">
+        <span class="sectie-badge blauw">Begrip</span>
+        <span class="sectie-naam">Wat is een macht?</span>
+      </div>
+      <div class="sectie-inhoud">
+        <!-- Visueel: 3^5 met labels -->
+        <div class="definitie-visueel">
+          <span class="def-getal">3</span><span class="def-exp">5</span>
+        </div>
+        <div class="def-pijlen">
+          <div class="def-pijl-item">
+            <span class="def-chip grondtal">Grondtal</span>
+            <span class="def-pijl-lijn grondtal"></span>
+            <span style="font-size:.78rem;font-weight:800;color:var(--blauw)">3</span>
+          </div>
+          <div class="def-pijl-item">
+            <span class="def-chip exponent">Exponent</span>
+            <span class="def-pijl-lijn exponent"></span>
+            <span style="font-size:.78rem;font-weight:800;color:var(--paars)">5</span>
+          </div>
+          <div class="def-pijl-item">
+            <span class="def-chip macht">Macht = resultaat</span>
+            <span class="def-pijl-lijn" style="background:var(--groen)"></span>
+            <span style="font-size:.78rem;font-weight:800;color:var(--groen)">243</span>
+          </div>
+        </div>
+        <div class="def-uitleg">
+          <table>
+            <tr><td>3<sup>5</sup> =</td><td>3 · 3 · 3 · 3 · 3 = 243</td></tr>
+            <tr><td>Lees:</td><td>drie tot de vijfde macht</td></tr>
+            <tr><td>Exponent = 2?</td><td>Dan noem je het ook een <strong>kwadraat</strong>.<br>8² = het kwadraat van 8</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="sectie">
+      <div class="sectie-header groen">
+        <span class="sectie-badge groen">Kwadraten</span>
+        <span class="sectie-naam">Ken uit het hoofd: 0² t.e.m. 15²</span>
+      </div>
+      <div class="sectie-inhoud">
+        <table class="kwadraten-tabel" style="margin-bottom:8px">
+          <thead>
+            <tr>
+              <th><em>n</em></th>
+              <th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="kwadraat-rij">
+              <td style="font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:900;font-style:italic;color:var(--blauw);background:var(--blauw-licht)!important">n²</td>
+              <td>0</td><td>1</td><td>4</td><td>9</td><td>16</td><td>25</td><td>36</td><td>49</td>
+            </tr>
+          </tbody>
+        </table>
+        <table class="kwadraten-tabel">
+          <thead>
+            <tr>
+              <th><em>n</em></th>
+              <th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="kwadraat-rij">
+              <td style="font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:900;font-style:italic;color:var(--blauw);background:var(--blauw-licht)!important">n²</td>
+              <td>64</td><td>81</td><td>100</td><td>121</td><td>144</td><td>169</td><td>196</td><td>225</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tekenregel + Haakjes naast elkaar -->
+  <div class="twee-kolommen">
+
+    <div class="sectie">
+      <div class="sectie-header rood">
+        <span class="sectie-badge rood">Tekenregel</span>
+        <span class="sectie-naam">Macht van een negatief getal</span>
+      </div>
+      <div class="sectie-inhoud">
+        <div class="tekenregel-box">
+          <div class="tk-label">Wanneer is een macht negatief?</div>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="font-size:.85rem;font-weight:700;padding:4px 8px 4px 0;vertical-align:middle;line-height:1.3;">grondtal negatief + exponent <strong>oneven</strong></td>
+              <td style="white-space:nowrap;padding:4px 6px;color:var(--muted);font-weight:700;vertical-align:middle;">→</td>
+              <td style="padding:4px 0;vertical-align:middle;"><span class="tk-chip neg">− negatief</span></td>
+            </tr>
+            <tr>
+              <td style="font-size:.85rem;font-weight:700;padding:4px 8px 4px 0;vertical-align:middle;line-height:1.3;">grondtal negatief + exponent <strong>even</strong></td>
+              <td style="white-space:nowrap;padding:4px 6px;color:var(--muted);font-weight:700;vertical-align:middle;">→</td>
+              <td style="padding:4px 0;vertical-align:middle;"><span class="tk-chip pos">+ positief</span></td>
+            </tr>
+            <tr>
+              <td style="font-size:.85rem;font-weight:700;padding:4px 8px 4px 0;vertical-align:middle;line-height:1.3;">grondtal positief</td>
+              <td style="white-space:nowrap;padding:4px 6px;color:var(--muted);font-weight:700;vertical-align:middle;">→</td>
+              <td style="padding:4px 0;vertical-align:middle;"><span class="tk-chip pos">+ altijd positief</span></td>
+            </tr>
+          </table>
+        </div>
+        <div class="voorbeeld-blok" style="flex-direction:column;align-items:flex-start;gap:2px;">
+          <span class="vb-label" style="margin-bottom:4px;">Voorbeelden</span>
+          <table style="border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;">
+            <tr>
+              <td style="padding:2px 6px 2px 0;white-space:nowrap;">(−2)<sup>3</sup></td>
+              <td style="padding:2px 4px;">=</td>
+              <td style="padding:2px 6px;white-space:nowrap;">−8</td>
+              <td style="padding:2px 0;"><span style="color:var(--rood);font-weight:900;">▸ negatief</span></td>
+            </tr>
+            <tr>
+              <td style="padding:2px 6px 2px 0;white-space:nowrap;">(−2)<sup>4</sup></td>
+              <td style="padding:2px 4px;">=</td>
+              <td style="padding:2px 6px;white-space:nowrap;">16</td>
+              <td style="padding:2px 0;"><span style="color:var(--groen);font-weight:900;">▸ positief</span></td>
+            </tr>
+            <tr>
+              <td style="padding:2px 6px 2px 0;white-space:nowrap;">10<sup>3</sup></td>
+              <td style="padding:2px 4px;">=</td>
+              <td style="padding:2px 6px;white-space:nowrap;">1 000</td>
+              <td style="padding:2px 0;"><span style="color:var(--groen);font-weight:900;">▸ positief</span></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="sectie">
+      <div class="sectie-header geel">
+        <span class="sectie-badge geel">Let op!</span>
+        <span class="sectie-naam">Haakjes maken het verschil</span>
+      </div>
+      <div class="sectie-inhoud">
+        <table class="haakjes-tabel">
+          <tr class="rij-a">
+            <td class="notatie">10<sup>4</sup></td>
+            <td class="betekenis">de vierde macht van 10<br><strong style="color:var(--groen)">= 10 000</strong></td>
+          </tr>
+          <tr class="rij-b">
+            <td class="notatie">(−10)<sup>4</sup></td>
+            <td class="betekenis">de vierde macht van −10<br><strong style="color:var(--groen)">= 10 000</strong></td>
+          </tr>
+          <tr class="rij-c">
+            <td class="notatie">−10<sup>4</sup></td>
+            <td class="betekenis">het tegengestelde van 10<sup>4</sup><br><strong style="color:var(--rood)">= −10 000</strong></td>
+          </tr>
+          <tr class="rij-d">
+            <td class="notatie">−(−10)<sup>4</sup></td>
+            <td class="betekenis">het tegengestelde van (−10)<sup>4</sup><br><strong style="color:var(--rood)">= −10 000</strong></td>
+          </tr>
+        </table>
+        <div class="valkuil-blok">
+          <span class="valkuil-icoon">⚠️</span>
+          <span>De exponent hoort bij wat er <em>tussen de haakjes</em> staat, niet bij het minteken ervoor.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Macht van een breuk -->
+  <div class="sectie">
+    <div class="sectie-header paars">
+      <span class="sectie-badge paars">Breuken</span>
+      <span class="sectie-naam">Macht van een breuk</span>
+    </div>
+    <div class="sectie-inhoud">
+      <ul class="stappen">
+        <li class="stap">
+          <span class="stap-nr paars">1</span>
+          <span class="stap-tekst">Als het grondtal een breuk is, zet je de <strong>hele breuk tussen haakjes</strong>.<br>
+          De vierde macht van <span class="breuk"><span class="bt">3</span><span class="bs"></span><span class="bn">5</span></span> schrijf je als
+          &nbsp;<span class="breuk-macht"><span class="haak">(</span><span class="breuk"><span class="bt">3</span><span class="bs"></span><span class="bn">5</span></span><span class="haak">)</span><span class="exp">4</span></span></span>
+        </li>
+        <li class="stap">
+          <span class="stap-nr paars">2</span>
+          <span class="stap-tekst">Schrijf uit als product van gelijke factoren, dan bereken je teller en noemer apart:<br>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:700">
+            <span class="breuk-macht"><span class="haak">(</span><span class="breuk"><span class="bt">3</span><span class="bs"></span><span class="bn">5</span></span><span class="haak">)</span><span class="exp">4</span></span> =
+            <span class="breuk"><span class="bt">3</span><span class="bs"></span><span class="bn">5</span></span> ·
+            <span class="breuk"><span class="bt">3</span><span class="bs"></span><span class="bn">5</span></span> ·
+            <span class="breuk"><span class="bt">3</span><span class="bs"></span><span class="bn">5</span></span> ·
+            <span class="breuk"><span class="bt">3</span><span class="bs"></span><span class="bn">5</span></span> =
+            <span class="breuk"><span class="bt">3<sup>4</sup></span><span class="bs"></span><span class="bn">5<sup>4</sup></span></span> =
+            <span class="breuk"><span class="bt">81</span><span class="bs"></span><span class="bn">625</span></span>
+          </span></span>
+        </li>
+        <li class="stap">
+          <span class="stap-nr paars">3</span>
+          <span class="stap-tekst">De tekenregel geldt ook hier: een macht is enkel negatief als het grondtal negatief is en de exponent oneven.<br>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700">
+            <span class="breuk-macht"><span class="haak">(</span><span class="breuk"><span class="bt">−9</span><span class="bs"></span><span class="bn">13</span></span><span class="haak">)</span><span class="exp">2</span></span>
+          </span>
+          &nbsp;→ <span style="color:var(--groen);font-weight:900">positief</span> &nbsp;&nbsp;
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700">
+            <span class="breuk-macht"><span class="haak">(</span><span class="breuk"><span class="bt">−9</span><span class="bs"></span><span class="bn">13</span></span><span class="haak">)</span><span class="exp">5</span></span>
+          </span>
+          &nbsp;→ <span style="color:var(--rood);font-weight:900">negatief</span></span>
+        </li>
+      </ul>
+      <div class="valkuil-blok">
+        <span class="valkuil-icoon">⚠️</span>
+        <span>Let op de haakjes: &nbsp;
+          <span class="breuk-macht"><span class="haak">(</span><span class="breuk" style="font-size:.78rem"><span class="bt">3</span><span class="bs"></span><span class="bn">5</span></span><span class="haak">)</span><span class="exp">4</span></span>
+          &nbsp;≠&nbsp;
+          <span class="breuk-macht"><span class="breuk" style="font-size:.78rem"><span class="bt">3<sup style="font-size:.7em">4</sup></span><span class="bs"></span><span class="bn">5</span></span></span>
+          &nbsp; — duid telkens de macht zelf aan!
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uitgewerkte voorbeelden -->
+  <div class="uitgewerkt">
+    <div class="uitgewerkt-header">
+      <span class="uitgewerkt-badge">Voorbeelden</span>
+      <span class="uitgewerkt-naam">Uitgewerkt</span>
+    </div>
+    <div class="uitgewerkt-inhoud">
+      <div>
+        <table class="uw-tabel">
+          <tr><td class="label">Vraag</td><td>5<sup>3</sup></td></tr>
+          <tr><td class="label">Uitschrijven</td><td>5 · 5 · 5</td></tr>
+          <tr><td class="label">Uitkomst</td><td>= 125 <span class="uw-check">✓</span></td></tr>
+        </table>
+      </div>
+      <div>
+        <table class="uw-tabel">
+          <tr><td class="label">Vraag</td><td>(−2)<sup>3</sup></td></tr>
+          <tr><td class="label">Teken</td><td>oneven exp. → −</td></tr>
+          <tr><td class="label">Berekening</td><td>2 · 2 · 2 = 8</td></tr>
+          <tr><td class="label">Uitkomst</td><td>= −8 <span class="uw-check">✓</span></td></tr>
+        </table>
+      </div>
+      <div>
+        <table class="uw-tabel">
+          <tr><td class="label">Vraag</td>
+            <td><span class="breuk-macht"><span class="haak">(</span><span class="breuk" style="font-size:.78rem"><span class="bt">5</span><span class="bs"></span><span class="bn">2</span></span><span class="haak">)</span><span class="exp">3</span></span></td>
+          </tr>
+          <tr><td class="label">Uitschrijven</td>
+            <td><span class="breuk" style="font-size:.78rem"><span class="bt">5·5·5</span><span class="bs"></span><span class="bn">2·2·2</span></span></td>
+          </tr>
+          <tr><td class="label">Uitkomst</td>
+            <td>= <span class="breuk" style="font-size:.78rem"><span class="bt">125</span><span class="bs"></span><span class="bn">8</span></span> <span class="uw-check">✓</span></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Hulpfiche &nbsp;·&nbsp; Machten &nbsp;·&nbsp; Gebruik als geheugensteun</div>
+
+</div>
+</body>
+</html>
